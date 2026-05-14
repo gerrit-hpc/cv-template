@@ -12,6 +12,7 @@ The idea: instead of editing one big CV file every time you apply somewhere, you
 2. **Open it in Claude Code.** From the repo root, run `claude` (or open the folder in your IDE plugin).
 3. **Build the knowledge base.** Run `/interview` and let Claude walk you through it. ~1 hour, can be split across sessions — files are saved as you go.
 4. **Tailor for a job.** Run `/tailor <jd-url-or-path>` once you have a job description. Outputs land in `applications/<company>-<role>/` as Typst sources and PDFs.
+5. **Prep for the interview.** Once invited to interview, run `/research-company <slug>` to capture company intel and calibration bands. Then run `/interview-prep <slug> <stage>` once per round (`recruiter-screen`, `hiring-manager`, `technical`, `leadership`, `final`) to generate a focused study brief.
 
 ---
 
@@ -20,16 +21,24 @@ The idea: instead of editing one big CV file every time you apply somewhere, you
 ```
 .claude/
   commands/
-    interview.md      # /interview — builds the knowledge base from a conversation
-    tailor.md         # /tailor — generates CV + cover letter from the KB for one JD
+    interview.md          # /interview — builds the knowledge base from a conversation
+    tailor.md             # /tailor — generates CV + cover letter from the KB for one JD
+    research-company.md   # /research-company — captures company intel + calibration
+    interview-prep.md     # /interview-prep — generates per-stage prep briefs
   skills/
-    cv-tailor/        # Skill that does the actual tailoring + Typst rendering
+    cv-tailor/            # Skill that does the actual tailoring + Typst rendering
       SKILL.md
-      templates/      # Parameterized Typst templates for CV + cover letter
-      references/     # Heuristics, voice guidelines, Typst build notes
+      templates/          # Parameterized Typst templates for CV + cover letter
+      references/         # Heuristics, voice guidelines, Typst build notes
+    research-company/     # Skill that does company research + interviewing the user
+      SKILL.md
+      references/         # Calibration bands taxonomy
+    interview-prep/       # Skill that generates per-stage interview prep briefs
+      SKILL.md
+      references/         # Stage playbooks, anchor-story selection, interviewer questions
 experience/
-  _template.md        # Shape of one experience-file entry. Don't delete.
-README.md             # This file
+  _template.md            # Shape of one experience-file entry. Don't delete.
+README.md                 # This file
 .gitignore
 ```
 
@@ -53,6 +62,18 @@ applications/
     tailoring-strategy.md
     cv.typ + cv.pdf
     cover-letter.typ + cover-letter.pdf
+```
+
+After running `/research-company` and `/interview-prep`:
+
+```
+applications/
+  <company>-<role>/
+    company-notes.md                       # Company intel + calibration bands
+    interview-prep-recruiter-screen.md     # One brief per stage you've prepped for
+    interview-prep-hiring-manager.md
+    interview-prep-technical.md
+    ...
 ```
 
 ---
@@ -116,6 +137,28 @@ Given a job description (URL, file path, or pasted text):
 5. **Iterates** in chat — "tighten the second paragraph", "drop the X bullet", "give me a sharper voice variant", etc.
 
 It will never fabricate skills, dates, or achievements. If the JD asks for something your KB doesn't cover, it gets flagged with options instead of invented.
+
+## How `/research-company` works
+
+Once you've been invited to interview, this command captures everything needed to calibrate prep:
+
+1. **Web pass** — fetches the company URL captured in the JD frontmatter (or asks you for one if the JD source isn't a URL). Pulls size, stage, sector, products, leadership, recent news from the company's own site.
+2. **Interview pass** — asks you (in chat, conversationally) about the process you've been told to expect, who you'll meet, what you already know about the company, and what you've heard through your network.
+3. **Calibration synthesis** — assigns three bands (`style`, `difficulty`, `tone`) that downstream prep reads. A FAANG interview gets calibrated differently to a 5-person startup.
+
+Writes `applications/<company>-<role>/company-notes.md`. Idempotent — you can re-run it across sessions as you learn more (e.g. after the recruiter call you know the panel; after the hiring-manager call you know the technical-round format).
+
+## How `/interview-prep` works
+
+Given an application folder and a stage name:
+
+1. **Reads everything** — KB, JD, tailoring strategy, company notes.
+2. **Proposes a prep plan** — anchor stories (3–5 from your KB, picked to cover the JD's must-haves) and question clusters tuned to the stage and calibration.
+3. **Waits for your approval** (same gate model as `/tailor`).
+4. **Generates** `applications/<company>-<role>/interview-prep-<stage>.md` — a focused markdown brief with: stage context, anchor stories in STAR form, likely questions with how-to-answer guidance, tough questions / gaps from the tailoring strategy, questions to ask the interviewer, and stage-specific logistics.
+5. **Iterates in chat** — swap stories, deepen sections, regenerate.
+
+One brief per stage, one file per stage. Run it again for each round.
 
 ---
 
