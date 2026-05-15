@@ -4,6 +4,9 @@ applications/
 # But always track the Next.js app shell route for applications.
 !app/**/applications/
 !app/**/applications/**
+# Also always track test fixtures under applications/.
+!test-fixtures/**/applications/
+!test-fixtures/**/applications/**
 
 # Editor / OS junk
 .obsidian/
