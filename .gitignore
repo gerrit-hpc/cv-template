@@ -14,6 +14,12 @@ applications/
 # applications/ is already excluded above; this catches any stray PDFs elsewhere.
 *.pdf
 
-# Open CoDesign working state (it copies specs into references/ and writes MEMORY.md)
-references/
-MEMORY.md
+# Open CoDesign's old root-level artifacts from before its working folder moved to design/.
+/references/
+/MEMORY.md
+
+# CoDesign mirrors the whole repo into design/ as its working state.
+# Track only the actual design outputs; ignore everything else in there.
+design/*
+!design/DESIGN.md
+!design/ui-design-spec.md
