@@ -13,7 +13,7 @@ describe("ReorderableList", () => {
       />,
     );
     const items = screen.getAllByRole("listitem");
-    expect(items[0].textContent).toContain("Zero");
-    expect(items[1].textContent).toContain("One");
+    expect(items[0]?.textContent).toContain("Zero");
+    expect(items[1]?.textContent).toContain("One");
   });
 });
