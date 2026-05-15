@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    background-color: #0C0E12;
+    color: #E8E9EC;
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  *, *::before, *::after {
+    border-color: #2A2E38;
+  }
+  *:focus-visible {
+    outline: 2px solid #2A3A5C;
+    outline-offset: 2px;
+  }
+}
