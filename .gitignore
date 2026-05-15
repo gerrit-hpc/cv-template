@@ -1,6 +1,9 @@
 # Generated CVs and cover letters — keep them out of version control by default.
 # Remove this line if you want to track applications.
 applications/
+# But always track the Next.js app shell route for applications.
+!app/**/applications/
+!app/**/applications/**
 
 # Editor / OS junk
 .obsidian/
