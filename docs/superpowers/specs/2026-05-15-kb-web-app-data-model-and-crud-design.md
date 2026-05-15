@@ -4,6 +4,15 @@
 **Status:** Design (approved for spec write — pending user review of this document)
 **Scope:** Sub-project 1 of 5 in the larger "turn the cv-template skills into a web app" effort.
 
+## Companion documents
+
+This spec covers **data model, behavior, and routes**. Visual design and page-by-page UI structure live in two companion documents at the repo root, which are authoritative for what they cover:
+
+- **`DESIGN.md`** — the design system: color palette (dark theme), typography (Geist / Geist Mono), spacing scale, shape tokens, component primitives (button, input, card, tag, status badge), and do's/don'ts. The implementation must consume these tokens, not redefine them.
+- **`ui-design-spec.md`** — page-by-page layout: shell (left rail + header + content), shared patterns (edit-in-place section, list view, empty state, reordering, tag selector), per-page mockups with field-level detail, an extended component inventory, and accessibility requirements.
+
+Where this spec and the UI spec overlap, the UI spec is authoritative for **visual treatment and field layout**; this spec is authoritative for **data shapes, server behavior, and acceptance criteria**. Conflicts resolved during the sync are called out inline below.
+
 ---
 
 ## Context
@@ -53,7 +62,7 @@ Each sub-project gets its own spec → plan → implementation cycle. This docum
 - **ORM**: Prisma. Schema lives at `prisma/schema.prisma`. Migrations are committed.
 - **Mutations**: Server Actions exclusively. Every action returns `{ ok: true, data } | { ok: false, error }` (see §6).
 - **Validation**: Zod at the Server Action boundary. Forms render field errors inline via `useFormState`.
-- **Styling**: Tailwind CSS + shadcn/ui primitives. No animation library yet.
+- **Styling**: Tailwind CSS + shadcn/ui primitives, themed via the `DESIGN.md` token set (colors, typography, spacing, shapes). Geist + Geist Mono self-hosted via `next/font/local` or `next/font/google` — exact loader chosen at implementation time. No animation library yet.
 - **Auth**: Optional. If `ADMIN_PASSWORD` env var is set, a middleware-level password gate guards every route except `/login` and `/api/health`. Cookie via `iron-session`, 30-day expiry, `HttpOnly + SameSite=Lax`.
 - **Storage**: PDF artifacts (when sub-project 3 lands) live under `storage/artifacts/<application_slug>/...` outside the Next.js `public/` tree. This sub-project provisions the directory structure but does not write to it yet.
 - **Logging**: Pino, JSON to stdout. No external aggregator.
@@ -481,6 +490,30 @@ enum ArtifactKind {
 
 In sub-project 1, `Artifact` rows are written only by the importer (registering existing PDFs as `version=1`). Regeneration lands in sub-project 3.
 
+### 2.3.1 Import run log
+
+```prisma
+model ImportRun {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt  DateTime @default(now())
+  finishedAt DateTime?
+  sourcePath String
+  result     ImportResult
+  summary    Json     // { counts: { imported, updated }, skipped: [{ file, error }] }
+}
+
+enum ImportResult {
+  success
+  partial
+  failed
+  in_progress
+}
+```
+
+One row per importer invocation. The Settings page reads the most-recent row to render status.
+
 ### 2.4 JSONB content shapes
 
 Stored as `Json` columns; mirrored by Zod schemas in `server/validation/`. Shapes intentionally match the current markdown skill outputs.
@@ -590,9 +623,12 @@ When multi-user comes later, the wrapper switches to read session-derived user i
 
 ---
 
-## 3. Importer (CLI)
+## 3. Importer (CLI + Settings UI)
 
-**Entry**: `npm run import -- <path-to-cv-template-repo>` → `scripts/import.ts` → `server/importer/run.ts`.
+**Entry points** (both invoke the same `server/importer/run.ts`):
+
+1. **CLI**: `npm run import -- <path-to-cv-template-repo>` → `scripts/import.ts` → `server/importer/run.ts`.
+2. **Settings UI**: `/settings` exposes a "Run importer" primary button (per `ui-design-spec.md` §Settings). The button triggers a Server Action that calls `server/importer/run.ts` with the default repo path resolved from an env var (`KB_SOURCE_REPO_PATH`) or a path field on the form. The action streams progress (one line per file) via a Server-Sent Events endpoint at `/api/import/stream`; the UI renders the stream in a status area. Last-import metadata (timestamp + result + skipped-file list) persists in a small `import_run` row so the Settings page survives a reload.
 
 **Flags**:
 - `--clean` — wipes all rows (cascading from `User`) and reimports. Re-seeds user + tags first.
@@ -631,23 +667,29 @@ Left rail is persistent on every authenticated page. Routes:
 | `/login` | Single password field | Only rendered if `ADMIN_PASSWORD` is set |
 | `/profile` | Edit profile | One form; sections: identity, summary, qualifications, languages |
 | `/experience` | List of roles | Sorted by `startDate desc`; click → detail |
-| `/experience/[slug]` | Role detail | Frontmatter form + overview + scope + achievements/highlights editor + tags + linked skills |
-| `/skills` | Categories + skills | Inline editable tables per category; soft-skills section below |
+| `/experience/new` | Create role | Same layout as detail with empty fields; slug auto-generated from company + title, editable; redirects to `/experience/[slug]` on create |
+| `/experience/[slug]` | Role detail | Frontmatter form + overview + scope + achievements/highlights editor + tags + **read-only** linked-skills list (skill ↔ role joins are managed from `/skills`, not here) |
+| `/skills` | Categories + skills | Inline editable tables per category; soft-skills section below. Manages `SkillApplication` joins (skill ↔ role linking) here. |
 | `/education` | Education list | Grouped by `kind` |
+| `/education/new` | Create education entry | Inline or page form; kind select drives field visibility |
 | `/values` | Four-section editor | Principles list, narrative textarea, opinions list, themes list |
-| `/applications` | Application list | Columns: slug, company, role, status, updated_at, primary action ("Open") |
-| `/applications/[slug]` | Application detail | Panes: JD / tailoring strategy / company notes / prep briefs / artifacts. Chat panel **stub** (placeholder card with copy "Chat lands in sub-project 2") |
-| `/settings` | Tag vocab + password toggle + import status + danger zone | "Wipe all data" with confirm |
+| `/applications` | Application list | Table view: company, role, status badge, updated_at (relative), [Open]. Sorted by `updatedAt desc`. |
+| `/applications/new` | Create application | Form: company, role title, language (en/de), slug (auto-generated, editable, mono font, validated unique); redirects to detail on create |
+| `/applications/[slug]` | Application detail | Panes: JD / tailoring strategy / company notes / prep briefs / artifacts. Chat panel **stub** (placeholder card with "Soon" pill, per ui-design-spec.md §Pane 6) |
+| `/settings` | Tag vocab + auth status + importer + danger zone | Auth section is read-only ("password protection is enabled/disabled" — env-var only in v1). Wipe-all requires typed `DELETE` confirmation. |
 | `/api/health` | `200 OK` | For container probes |
+| `/api/import/stream` | SSE | Server-Sent Events endpoint for the Settings importer button to stream per-file progress |
 
 ### UI conventions
 
-- **Edit-in-place** with a per-section Save button. No autosave in v1.
+- **Edit-in-place** with a per-section Save button. No autosave in v1. The Save button shows an 8px accent dot when the form has unsaved changes (per `ui-design-spec.md`).
 - **Optimistic UI**: not in v1. Server Actions await, then revalidate. Acceptable because mutations are cheap.
-- **Empty states**: every list view has an empty state with "import your existing markdown KB" pointer.
+- **Empty states**: every list view uses the empty-state component from `DESIGN.md` with an "import your existing markdown KB" pointer.
 - **Forms**: `useFormState` + Server Action; errors render inline.
 - **Reordering**: number input (`order` field), not drag-and-drop. v1 limitation.
-- **Tags**: rendered as pills; edit via a multiselect from the seeded vocabulary, extendable from `/settings`.
+- **Tags**: rendered as pills (per `DESIGN.md`); edit via the `TagSelector` component (`ui-design-spec.md`) — checkable dropdown over the seeded vocabulary with an inline "Create new tag" input that persists immediately.
+- **Skill ↔ role linking** is managed only from `/skills`; the role detail page renders linked skills read-only. Rationale: one canonical surface avoids two-way sync UX bugs.
+- **Destructive confirmations**: standard pattern from `ui-design-spec.md` — modal with typed confirmation (`DELETE`) for wipe-all and tag deletion when the tag is in use.
 
 ### Application detail page layout
 
@@ -684,7 +726,7 @@ Editing a tailoring strategy / company notes / brief in v1 means raw JSON edit i
 ## 5. Single-user / auth
 
 - **Seed**: `prisma/seed.ts` creates `User(id=1)`, the seven default `Tag` rows (`leadership / technical / strategy / delivery / culture / growth / innovation`), and a default set of `SkillCategory` rows (`Languages`, `Infrastructure & Platforms`, `Architecture & Design`, `AI & Developer Experience`, `Methods & Practices`).
-- **Optional auth**: middleware (`middleware.ts`) reads `ADMIN_PASSWORD`. Unset → no gate. Set → unauthenticated requests redirect to `/login`. Login compares plain-text input against `bcrypt.compare(input, env.ADMIN_PASSWORD_HASH)` — so the env var is actually `ADMIN_PASSWORD_HASH` (a bcrypt hash). `npm run hash-password` is a small helper that prints a hash for the user to paste into their `.env`.
+- **Optional auth**: middleware (`middleware.ts`) reads `ADMIN_PASSWORD_HASH`. Unset → no gate. Set → unauthenticated requests redirect to `/login`. Login compares plain-text input against `bcrypt.compare(input, env.ADMIN_PASSWORD_HASH)`. `npm run hash-password` is a small helper that prints a hash for the user to paste into their `.env`. If a user navigates to `/login` directly when `ADMIN_PASSWORD_HASH` is unset, the page renders an info card ("Authentication is not configured.") with a link back to `/profile` rather than a password field (per `ui-design-spec.md`).
 - **Session**: `iron-session` cookie, 30-day expiry, `HttpOnly + SameSite=Lax + Secure` (Secure off in dev).
 - **No CSRF lib**: Server Actions are origin-checked by Next.js. Pure-API endpoints (only `/api/health` in this slice) are public.
 - **Single-user enforcement**: §2.5's wrapper. CI grep guard rejects raw Prisma calls in `app/` or `server/actions/`.
@@ -787,14 +829,29 @@ Everything below lands in later sub-projects or is intentionally not built:
 - Multi-user, OAuth/SSO, billing (sub-project 5)
 - Drag-and-drop reordering
 - Markdown re-export
-- File-upload import wizard
-- Mobile-responsive layout (desktop only)
+- File-upload import wizard (CLI + Settings button are the only entry points; no drag-drop or file picker)
+- Full mobile-responsive layouts — desktop-first (≥1024px); below 1024px the left rail collapses to a drawer (per `ui-design-spec.md` §Responsive Behavior) but no other layout adaptation
 - Analytics / metrics
 - Anything that touches the existing `.claude/skills/` directory
 
 ---
 
-## 10. Acceptance criteria for sub-project 1
+## 10. Accessibility
+
+Inherited from `ui-design-spec.md` §Accessibility, restated here as implementation requirements:
+
+- All interactive elements render a 2px `accent-muted` focus ring on `:focus-visible`.
+- Form labels use `htmlFor` to associate with their inputs; error messages link via `aria-describedby`.
+- Navigation renders as a semantic `<nav>` with a nested `<ul>` / `<li>` structure.
+- Save success and error events fire into an `aria-live="polite"` region so screen readers announce the result.
+- Color is never the sole carrier of meaning — status badges include a text label alongside the dot, gap-flagged rows include a textual indicator.
+- Contrast targets: ≥ 4.5:1 for body text, ≥ 3:1 for UI components. The `DESIGN.md` palette is chosen to meet these against the dark base; implementation must not introduce off-palette colors that violate them.
+
+These are testable: the E2E suite includes an `@axe-core/playwright` smoke pass on each top-level surface.
+
+---
+
+## 11. Acceptance criteria for sub-project 1
 
 The slice is "done" when:
 
@@ -805,3 +862,6 @@ The slice is "done" when:
 5. Setting `ADMIN_PASSWORD_HASH` gates every route except `/login` and `/api/health`. Unsetting it removes the gate.
 6. All unit + integration + E2E tests pass in CI.
 7. The implementation does not modify any file under `.claude/`, `experience/`, or `applications/` in the existing repo.
+8. `DESIGN.md` tokens are reflected in the implemented Tailwind theme (color palette, typography scale, spacing, shape radii). No off-palette colors appear in any rendered page.
+9. The Settings page importer button runs the same code path as `npm run import` and streams progress via `/api/import/stream`. `import_run` rows persist after each invocation.
+10. `@axe-core/playwright` smoke pass succeeds on every top-level surface.
