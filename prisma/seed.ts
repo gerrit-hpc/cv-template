@@ -1,13 +1,6 @@
-import { config } from "dotenv";
-config();
-
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
 
-const db = new PrismaClient({
-  adapter: new PrismaPg(new Pool({ connectionString: process.env.DATABASE_URL })),
-});
+const db = new PrismaClient();
 
 const DEFAULT_TAGS = [
   { slug: "leadership", label: "Leadership" },
@@ -27,21 +20,11 @@ const DEFAULT_SKILL_CATEGORIES = [
   "Methods & Practices",
 ];
 
-async function main() {
-  const user = await db.user.upsert({
-    where: { id: 1 },
-    update: {},
-    create: { id: 1 },
-  });
-
+export default async function seed() {
+  const user = await db.user.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
   for (const tag of DEFAULT_TAGS) {
-    await db.tag.upsert({
-      where: { slug: tag.slug },
-      update: { label: tag.label },
-      create: tag,
-    });
+    await db.tag.upsert({ where: { slug: tag.slug }, update: { label: tag.label }, create: tag });
   }
-
   let order = 0;
   for (const name of DEFAULT_SKILL_CATEGORIES) {
     await db.skillCategory.upsert({
@@ -51,14 +34,9 @@ async function main() {
     });
     order += 1;
   }
-
   console.log("Seeded user", user.id, "tags", DEFAULT_TAGS.length, "categories", DEFAULT_SKILL_CATEGORIES.length);
 }
 
-main()
-  .then(() => db.$disconnect())
-  .catch(async (e) => {
-    console.error(e);
-    await db.$disconnect();
-    process.exit(1);
-  });
+if (process.argv[1]?.endsWith("seed.ts")) {
+  seed().then(() => db.$disconnect()).catch(async (e) => { console.error(e); await db.$disconnect(); process.exit(1); });
+}
