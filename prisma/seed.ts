@@ -1,6 +1,13 @@
-import { PrismaClient } from "@prisma/client";
+import { config } from "dotenv";
+config();
 
-const db = new PrismaClient();
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
+
+const db = new PrismaClient({
+  adapter: new PrismaPg(new Pool({ connectionString: process.env.DATABASE_URL })),
+});
 
 const DEFAULT_TAGS = [
   { slug: "leadership", label: "Leadership" },
