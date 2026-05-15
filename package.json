@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "./scripts/check-prisma-scoping.sh && vitest run",
     "test:watch": "vitest",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset --force",
