@@ -23,3 +23,18 @@ applications/
 design/*
 !design/DESIGN.md
 !design/ui-design-spec.md
+
+# Node / Next
+node_modules/
+.next/
+.env
+.env.local
+*.log
+coverage/
+playwright-report/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Git worktrees live here; never tracked
+.claude/worktrees/
