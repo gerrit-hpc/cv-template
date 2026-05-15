@@ -20,6 +20,7 @@ describe("parseEnv", () => {
     const env = parseEnv({
       DATABASE_URL: "postgres://localhost:5432/kb",
       ADMIN_PASSWORD_HASH: "$2b$12$abc",
+      SESSION_SECRET: "x".repeat(32),
     });
     expect(env.ADMIN_PASSWORD_HASH).toBe("$2b$12$abc");
   });

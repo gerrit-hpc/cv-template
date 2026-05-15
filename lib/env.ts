@@ -8,11 +8,7 @@ const Schema = z
     SESSION_SECRET: z.string().optional(),
   })
   .superRefine((val, ctx) => {
-    if (
-      val.ADMIN_PASSWORD_HASH &&
-      val.SESSION_SECRET !== undefined &&
-      val.SESSION_SECRET.length < 32
-    ) {
+    if (val.ADMIN_PASSWORD_HASH && (val.SESSION_SECRET?.length ?? 0) < 32) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["SESSION_SECRET"],
