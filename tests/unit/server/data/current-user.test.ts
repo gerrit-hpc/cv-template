@@ -8,7 +8,8 @@ describe("current-user", () => {
 
   it("scopeToUser adds userId to a where clause", () => {
     expect(scopeToUser({})).toEqual({ userId: 1 });
-    expect(scopeToUser({ slug: "x" })).toEqual({ slug: "x", userId: 1 });
+    const withSlug: { slug: string; userId?: number } = { slug: "x" };
+    expect(scopeToUser(withSlug)).toEqual({ slug: "x", userId: 1 });
   });
 
   it("scopeToUser preserves an existing userId only if it equals CURRENT_USER_ID", () => {
