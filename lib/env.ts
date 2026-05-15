@@ -1,0 +1,30 @@
+import { z } from "zod";
+
+const Schema = z
+  .object({
+    DATABASE_URL: z.string().url(),
+    KB_SOURCE_REPO_PATH: z.string().optional(),
+    ADMIN_PASSWORD_HASH: z.string().optional(),
+    SESSION_SECRET: z.string().optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (
+      val.ADMIN_PASSWORD_HASH &&
+      val.SESSION_SECRET !== undefined &&
+      val.SESSION_SECRET.length < 32
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["SESSION_SECRET"],
+        message: "SESSION_SECRET must be ≥32 chars when ADMIN_PASSWORD_HASH is set",
+      });
+    }
+  });
+
+export type Env = z.infer<typeof Schema>;
+
+export function parseEnv(raw: Record<string, string | undefined>): Env {
+  return Schema.parse(raw);
+}
+
+export const env: Env = parseEnv(process.env);
