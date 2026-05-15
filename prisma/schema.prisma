@@ -1,0 +1,373 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  profile         Profile?
+  educations      EducationEntry[]
+  roles           ExperienceRole[]
+  skillCategories SkillCategory[]
+  softSkills      SoftSkill[]
+  principles      ValuePrinciple[]
+  narrative       ValueCareerNarrative?
+  opinions        ValueIndustryOpinion[]
+  themes          ValueLinkedInTheme[]
+  applications    Application[]
+  importRuns      ImportRun[]
+}
+
+model Profile {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName            String
+  headline            String
+  locationCity        String?
+  locationCountry     String?
+  email               String
+  phone               String?
+  linkedinUrl         String?
+  githubUrl           String?
+  websiteUrl          String?
+  professionalSummary String
+
+  keyQualifications KeyQualification[]
+  languages         Language[]
+}
+
+model KeyQualification {
+  id        Int     @id @default(autoincrement())
+  profileId Int
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  text      String
+  order     Int
+}
+
+model Language {
+  id          Int     @id @default(autoincrement())
+  profileId   Int
+  profile     Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name        String
+  proficiency String
+  order       Int
+}
+
+enum EducationKind {
+  degree
+  certification
+  course
+}
+
+model EducationEntry {
+  id          Int           @id @default(autoincrement())
+  userId      Int
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind        EducationKind
+  institution String?
+  name        String
+  field       String?
+  startDate   String?
+  endDate     String?
+  notes       String?
+  order       Int
+}
+
+enum EmploymentType {
+  full_time
+  part_time
+  contract
+  internship
+}
+
+model ExperienceRole {
+  id               Int            @id @default(autoincrement())
+  userId           Int
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug             String
+  company          String
+  title            String
+  startDate        String
+  endDate          String?
+  location         String?
+  employmentType   EmploymentType
+  companyUrl       String?
+  overview         String
+  scopeTeamSize    String?
+  scopeReportingTo String?
+  scopeTechStack   String?
+  scopeBudget      String?
+  isHighlightsOnly Boolean        @default(false)
+
+  achievements      Achievement[]
+  highlights        Highlight[]
+  tags              RoleTag[]
+  skillApplications SkillApplication[]
+
+  @@unique([userId, slug])
+}
+
+model Achievement {
+  id      Int              @id @default(autoincrement())
+  roleId  Int
+  role    ExperienceRole   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  title   String
+  result  String
+  context String
+  action  String
+  order   Int
+  tags    AchievementTag[]
+}
+
+model Highlight {
+  id     Int            @id @default(autoincrement())
+  roleId Int
+  role   ExperienceRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  text   String
+  order  Int
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  slug  String @unique
+  label String
+
+  roles        RoleTag[]
+  achievements AchievementTag[]
+  softSkills   SoftSkillTag[]
+}
+
+model RoleTag {
+  roleId Int
+  tagId  Int
+  role   ExperienceRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  tag    Tag            @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, tagId])
+}
+
+model AchievementTag {
+  achievementId Int
+  tagId         Int
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  tag           Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([achievementId, tagId])
+}
+
+model SkillCategory {
+  id     Int    @id @default(autoincrement())
+  userId Int
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+  order  Int
+
+  skills Skill[]
+
+  @@unique([userId, name])
+}
+
+enum Proficiency {
+  familiar
+  proficient
+  expert
+}
+
+model Skill {
+  id          Int           @id @default(autoincrement())
+  categoryId  Int
+  category    SkillCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name        String
+  proficiency Proficiency
+  notes       String?
+  order       Int
+
+  applications SkillApplication[]
+
+  @@unique([categoryId, name])
+}
+
+model SkillApplication {
+  skillId Int
+  roleId  Int
+  skill   Skill          @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  role    ExperienceRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([skillId, roleId])
+}
+
+model SoftSkill {
+  id                Int    @id @default(autoincrement())
+  userId            Int
+  user              User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  whereDemonstrated String
+  whatHappened      String
+  order             Int
+
+  tags SoftSkillTag[]
+}
+
+model SoftSkillTag {
+  softSkillId Int
+  tagId       Int
+  softSkill   SoftSkill @relation(fields: [softSkillId], references: [id], onDelete: Cascade)
+  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([softSkillId, tagId])
+}
+
+model ValuePrinciple {
+  id            Int    @id @default(autoincrement())
+  userId        Int
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  statement     String
+  justification String
+  order         Int
+}
+
+model ValueCareerNarrative {
+  id     Int    @id @default(autoincrement())
+  userId Int    @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text   String
+}
+
+model ValueIndustryOpinion {
+  id              Int    @id @default(autoincrement())
+  userId          Int
+  user            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  position        String
+  why             String
+  counterargument String
+  order           Int
+}
+
+model ValueLinkedInTheme {
+  id     Int    @id @default(autoincrement())
+  userId Int
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text   String
+  order  Int
+}
+
+enum JdLanguage {
+  en
+  de
+}
+
+enum ApplicationStatus {
+  drafting
+  applied
+  interviewing
+  offer
+  closed
+}
+
+model Application {
+  id        Int               @id @default(autoincrement())
+  userId    Int
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug      String
+  company   String
+  roleTitle String
+  language  JdLanguage
+  status    ApplicationStatus @default(drafting)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  jobDescription      JobDescription?
+  tailoringStrategy   TailoringStrategy?
+  companyNotes        CompanyNotes?
+  interviewPrepBriefs InterviewPrepBrief[]
+  artifacts           Artifact[]
+
+  @@unique([userId, slug])
+}
+
+enum JdSourceType {
+  url
+  path
+  pasted
+}
+
+model JobDescription {
+  id            Int          @id @default(autoincrement())
+  applicationId Int          @unique
+  application   Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  sourceType    JdSourceType
+  sourceValue   String?
+  capturedAt    DateTime
+  content       String
+}
+
+model TailoringStrategy {
+  id            Int         @id @default(autoincrement())
+  applicationId Int         @unique
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  content       Json
+  approvedAt    DateTime?
+}
+
+model CompanyNotes {
+  id            Int         @id @default(autoincrement())
+  applicationId Int         @unique
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  researchedAt  DateTime
+  lastUpdated   DateTime
+  content       Json
+}
+
+model InterviewPrepBrief {
+  id            Int         @id @default(autoincrement())
+  applicationId Int
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  stageName     String
+  generatedAt   DateTime
+  content       Json
+
+  @@unique([applicationId, stageName])
+}
+
+enum ArtifactKind {
+  cv
+  cover_letter
+}
+
+model Artifact {
+  id            Int          @id @default(autoincrement())
+  applicationId Int
+  application   Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  kind          ArtifactKind
+  typstSource   String
+  pdfPath       String?
+  generatedAt   DateTime     @default(now())
+  version       Int
+
+  @@unique([applicationId, kind, version])
+}
+
+enum ImportResult {
+  success
+  partial
+  failed
+  in_progress
+}
+
+model ImportRun {
+  id         Int          @id @default(autoincrement())
+  userId     Int
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt  DateTime     @default(now())
+  finishedAt DateTime?
+  sourcePath String
+  result     ImportResult
+  summary    Json
+}
