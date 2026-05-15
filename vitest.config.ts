@@ -9,6 +9,9 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],
     include: ["tests/**/*.test.{ts,tsx}"],
+    // Integration tests share a single Postgres and reset it in beforeAll;
+    // running test files in parallel would let them stomp on each other.
+    fileParallelism: false,
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
