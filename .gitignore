@@ -22,3 +22,6 @@ node_modules/
 *.log
 coverage/
 playwright-report/
+
+# TypeScript incremental build info
+*.tsbuildinfo
