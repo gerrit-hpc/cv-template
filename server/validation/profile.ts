@@ -5,7 +5,9 @@ export const ProfileSchema = z.object({
   headline: z.string().min(1, "Headline is required"),
   locationCity: z.string().optional().nullable(),
   locationCountry: z.string().optional().nullable(),
-  email: z.string().email("Valid email required"),
+  // z.string().email() in Zod 4 rejects single-char domain segments (e.g. a@b.c).
+  // Use a permissive regex that still rejects non-emails while accepting short TLDs.
+  email: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Valid email required"),
   phone: z.string().optional().nullable(),
   linkedinUrl: z.string().url().optional().nullable().or(z.literal("")),
   githubUrl: z.string().url().optional().nullable().or(z.literal("")),

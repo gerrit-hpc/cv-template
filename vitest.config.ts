@@ -21,6 +21,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./", import.meta.url)),
+      "next/cache": fileURLToPath(new URL("./tests/__stubs__/next-cache.ts", import.meta.url)),
     },
   },
 });
