@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .prose-invert h1 { @apply text-heading text-text mb-md; }
+  .prose-invert h2 { @apply text-subheading text-text mt-lg mb-sm; }
+  .prose-invert p { @apply text-body text-text mb-md; }
+  .prose-invert ul { @apply list-disc pl-lg mb-md; }
+  .prose-invert table { @apply border-collapse mb-md; }
+  .prose-invert th, .prose-invert td { @apply border border-border px-md py-sm; }
+}
+
 @layer base {
   html, body {
     background-color: #0C0E12;
