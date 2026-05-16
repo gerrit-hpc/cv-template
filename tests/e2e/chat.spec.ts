@@ -46,3 +46,45 @@ test("chat pane: send button disabled for empty input", async ({ page }) => {
   await page.getByRole("textbox", { name: "Message input" }).fill("  ");
   await expect(sendButton).toBeDisabled();
 });
+
+test("chat pane: Tailor toggle activates mode and forwards to API", async ({ page }) => {
+  await page.goto("/applications/testco-engineer");
+
+  // Mock the SSE response so the test doesn't depend on a live LLM
+  await page.route("/api/chat/testco-engineer", async (route) => {
+    const events = [
+      { type: "text_delta", text: "ok" },
+      { type: "done", finishReason: "end_turn" },
+    ];
+    const body = events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join("");
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body,
+    });
+  });
+
+  // Toggle Tailor mode
+  await page.getByRole("button", { name: "Tailor" }).click();
+
+  // Hint text appears
+  await expect(
+    page.getByText(/Tailor mode — Claude will read your KB/),
+  ).toBeVisible();
+
+  // Send a message; intercept the POST body
+  const requestPromise = page.waitForRequest(
+    (req) => req.url().includes("/api/chat/") && req.method() === "POST",
+  );
+  await page.getByRole("textbox", { name: "Message input" }).fill("Draft a tailoring strategy");
+  await page.getByRole("button", { name: "Send" }).click();
+  const request = await requestPromise;
+
+  const body = JSON.parse(request.postData() ?? "{}");
+  expect(body.mode).toBe("tailor");
+  expect(body.system).toBeUndefined();
+
+  // Switch back to Free chat — hint disappears
+  await page.getByRole("button", { name: "Free chat" }).click();
+  await expect(page.getByText(/Tailor mode —/)).not.toBeVisible();
+});
