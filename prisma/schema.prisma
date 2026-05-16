@@ -289,6 +289,7 @@ model Application {
   interviewPrepBriefs InterviewPrepBrief[]
   artifacts           Artifact[]
   chatMessages        ChatMessage[]
+  chatToolCalls       ChatToolCall[]
 
   @@unique([userId, slug])
 }
@@ -369,6 +370,32 @@ model ChatMessage {
   content       String
   createdAt     DateTime    @default(now())
 
+  @@index([applicationId, createdAt])
+}
+
+enum ChatToolCallStatus {
+  pending
+  approved
+  edited
+  rejected
+  cancelled
+  errored
+}
+
+model ChatToolCall {
+  id              Int                @id @default(autoincrement())
+  applicationId   Int
+  application     Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  toolName        String
+  toolUseId       String
+  args            Json
+  status          ChatToolCallStatus @default(pending)
+  resolvedContent Json?
+  resolutionError String?
+  createdAt       DateTime           @default(now())
+  resolvedAt      DateTime?
+
+  @@index([applicationId, status])
   @@index([applicationId, createdAt])
 }
 
