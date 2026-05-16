@@ -37,6 +37,7 @@
     "rehype-sanitize": "6.0.0",
     "remark-gfm": "4.0.1",
     "tailwind-merge": "3.6.0",
+    "typebox": "1.1.24",
     "zod": "4.4.3"
   },
   "devDependencies": {

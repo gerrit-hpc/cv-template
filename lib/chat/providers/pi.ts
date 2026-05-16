@@ -3,9 +3,10 @@
 // For this stateless streaming API endpoint, we use Agent from @earendil-works/pi-agent-core
 // directly, which provides the same text streaming via subscribe() without the overhead.
 import { Agent } from "@earendil-works/pi-agent-core";
-import type { AgentMessage } from "@earendil-works/pi-agent-core";
+import type { AgentMessage, AgentTool } from "@earendil-works/pi-agent-core";
 import { getModel } from "@earendil-works/pi-ai";
 import type { ChatProvider, ChatStreamEvent } from "./types.js";
+import type { KbTool } from "@/lib/chat/tools/types.js";
 
 const DEFAULT_MODEL_SPEC = "anthropic:claude-sonnet-4-5-20250929";
 
@@ -19,6 +20,34 @@ const ZERO_USAGE = {
   cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
 } as const;
 
+function kbToolToPiTool(tool: KbTool): AgentTool {
+  return {
+    name: tool.name,
+    description: tool.description,
+    parameters: tool.parameters,
+    label: tool.name,
+    executionMode: "parallel",
+    execute: async (_toolCallId, args) => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const out = await tool.execute(args as any);
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(out) }],
+          details: out,
+        };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ error: msg }) }],
+          details: { error: msg },
+          // Pi's AgentToolResult does not have isError; encode it in the content instead.
+          // The loop emits isError: false here; the model reads the JSON error payload.
+        };
+      }
+    },
+  };
+}
+
 export function createPiProvider(apiKey: string, modelSpec?: string): ChatProvider {
   const spec = modelSpec ?? DEFAULT_MODEL_SPEC;
   const colonIdx = spec.indexOf(":");
@@ -28,13 +57,14 @@ export function createPiProvider(apiKey: string, modelSpec?: string): ChatProvid
   const model = getModel(providerName as any, modelId as any);
 
   return {
-    async *streamReply({ messages, system, signal }) {
+    async *streamReply({ messages, system, tools, signal }) {
       const historyMessages: AgentMessage[] = messages.slice(0, -1).map((m, i) => {
         if (m.role === "user") {
           return { role: "user" as const, content: m.content, timestamp: i };
         }
         // Reconstruct a minimal AssistantMessage for history replay.
         // Token counts are unknown for stored messages; zeros are used as placeholders.
+        // Tool-use history is not reconstructed — the DB never stored tool_use content blocks in v1.
         return {
           role: "assistant" as const,
           content: [{ type: "text" as const, text: m.content }],
@@ -48,11 +78,14 @@ export function createPiProvider(apiKey: string, modelSpec?: string): ChatProvid
         };
       });
 
+      const piTools: AgentTool[] = (tools ?? []).map(kbToolToPiTool);
+
       const agent = new Agent({
         initialState: {
           systemPrompt: system ?? "",
           model,
           messages: historyMessages,
+          tools: piTools,
         },
         getApiKey: () => apiKey,
       });
