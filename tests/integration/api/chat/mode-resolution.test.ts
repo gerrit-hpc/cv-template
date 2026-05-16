@@ -71,8 +71,8 @@ describe("/api/chat/[slug] mode resolution", () => {
     expect(streamReplySpy).toHaveBeenCalledTimes(1);
     const args = streamReplySpy.mock.calls[0]![0];
     expect(args.system).toBe("BASE_SYSTEM");
-    // buildKbTools(CURRENT_USER_ID) returns 6 KB tools; no mode means no filtering.
-    expect(args.tools?.length).toBe(6);
+    // 6 KB tools + 3 write tools (HOM-25) = 9 when no mode filtering is applied.
+    expect(args.tools?.length).toBe(9);
   });
 
   it("returns 400 and never calls the provider for an unknown mode", async () => {
