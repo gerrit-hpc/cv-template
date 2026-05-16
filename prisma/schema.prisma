@@ -288,6 +288,7 @@ model Application {
   companyNotes        CompanyNotes?
   interviewPrepBriefs InterviewPrepBrief[]
   artifacts           Artifact[]
+  chatMessages        ChatMessage[]
 
   @@unique([userId, slug])
 }
@@ -352,6 +353,23 @@ model Artifact {
   version       Int
 
   @@unique([applicationId, kind, version])
+}
+
+enum ChatRole {
+  user
+  assistant
+  system
+}
+
+model ChatMessage {
+  id            Int         @id @default(autoincrement())
+  applicationId Int
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  role          ChatRole
+  content       String
+  createdAt     DateTime    @default(now())
+
+  @@index([applicationId, createdAt])
 }
 
 enum ImportResult {
