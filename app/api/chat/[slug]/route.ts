@@ -13,7 +13,7 @@ const BodySchema = z.object({
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const app = await db.application.findFirst({
+  const app = await db.application.findFirst({ // scopeToUser: userId = CURRENT_USER_ID
     where: { userId: CURRENT_USER_ID, slug },
     select: { id: true },
   });

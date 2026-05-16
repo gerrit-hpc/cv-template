@@ -67,7 +67,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
         <CompanyNotesPane applicationId={app.id} notes={notes} lastUpdated={app.companyNotes?.lastUpdated ?? null} />
         <BriefsPane applicationId={app.id} briefs={briefs} />
         <ArtifactsPane artifacts={app.artifacts.map((a) => ({ kind: a.kind as "cv" | "cover_letter", version: a.version, generatedAt: a.generatedAt, pdfPath: a.pdfPath }))} />
-        <ChatPane />
+        <ChatPane applicationId={app.id} applicationSlug={app.slug} />
       </div>
     </>
   );
