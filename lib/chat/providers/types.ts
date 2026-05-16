@@ -1,7 +1,12 @@
+import type { KbTool } from "@/lib/chat/tools/types.js";
+
+export type { KbTool };
+
 export interface ChatProvider {
   streamReply(input: {
     messages: Array<{ role: "user" | "assistant"; content: string }>;
     system?: string;
+    tools?: KbTool[];
     signal?: AbortSignal;
   }): AsyncIterable<ChatStreamEvent>;
 }

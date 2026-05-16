@@ -4,6 +4,7 @@ import { db } from "@/server/data/db";
 import { CURRENT_USER_ID } from "@/server/data/current-user";
 import { getChatProvider } from "@/lib/chat/providers/index";
 import { loadHistory, appendUserMessage, appendAssistantMessage } from "@/lib/chat/persistence";
+import { buildKbTools } from "@/lib/chat/tools/kb/index";
 
 const BodySchema = z.object({
   content: z.string().min(1),
@@ -33,7 +34,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
   req.signal.addEventListener("abort", () => abortController.abort());
 
   const provider = await getChatProvider();
-  const events = provider.streamReply({ messages: history, system, signal: abortController.signal });
+  // Build tools scoped to the current user. Tool payloads stream to the client
+  // but are not persisted to ChatMessage in v1 (payload persistence lands with HOM-25).
+  const tools = buildKbTools(CURRENT_USER_ID); // scopeToUser: CURRENT_USER_ID
+  const events = provider.streamReply({ messages: history, system, tools, signal: abortController.signal });
 
   const encoder = new TextEncoder();
   let accumulated = "";
