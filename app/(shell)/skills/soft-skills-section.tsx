@@ -63,7 +63,7 @@ export function SoftSkillsSection({ items, availableTags }: { items: SoftSkill[]
                   <p className="text-subheading">{s.name}</p>
                   <div className="flex gap-sm">
                     <Button variant="ghost" onClick={() => setEditingId(s.id)}>Edit</Button>
-                    <Button variant="ghost" onClick={() => start(async () => { await deleteSoftSkill(s.id); })}>Delete</Button>
+                    <Button variant="ghost" onClick={() => start(async () => { if (confirm(`Delete soft skill "${s.name}"?`)) await deleteSoftSkill(s.id); })}>Delete</Button>
                   </div>
                 </div>
                 <p className="text-body"><strong>Where:</strong> {s.whereDemonstrated}</p>

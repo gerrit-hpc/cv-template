@@ -65,7 +65,7 @@ export function HardSkillsCategorySection({
             Save
           </Button>
           {skill ? (
-            <Button variant="ghost" onClick={() => start(async () => { await deleteSkill(skill.id); })}>×</Button>
+            <Button variant="ghost" onClick={() => start(async () => { if (confirm(`Delete skill "${skill.name}"?`)) await deleteSkill(skill.id); })}>×</Button>
           ) : (
             <Button variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
           )}

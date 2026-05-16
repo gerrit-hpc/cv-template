@@ -6,6 +6,7 @@ import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
+import { MarkdownPreview } from "@/components/sections/markdown-preview";
 
 const EMPTY: CompanyNotesContent = {
   company: { overview: "", products: "", recentSignals: "", leadership: "", reputation: "" },
@@ -44,14 +45,14 @@ export function CompanyNotesPane({
         {notes && !editing ? (
           <>
             <section className="grid grid-cols-2 gap-md">
-              <div><p className="text-label uppercase text-text-secondary">Overview</p><p className="text-body">{notes.company.overview}</p></div>
-              <div><p className="text-label uppercase text-text-secondary">Products</p><p className="text-body">{notes.company.products}</p></div>
-              <div><p className="text-label uppercase text-text-secondary">Recent signals</p><p className="text-body">{notes.company.recentSignals}</p></div>
-              <div><p className="text-label uppercase text-text-secondary">Leadership</p><p className="text-body">{notes.company.leadership}</p></div>
-              <div className="col-span-2"><p className="text-label uppercase text-text-secondary">Reputation</p><p className="text-body">{notes.company.reputation}</p></div>
+              <div><p className="text-label uppercase text-text-secondary">Overview</p><MarkdownPreview source={notes.company.overview} /></div>
+              <div><p className="text-label uppercase text-text-secondary">Products</p><MarkdownPreview source={notes.company.products} /></div>
+              <div><p className="text-label uppercase text-text-secondary">Recent signals</p><MarkdownPreview source={notes.company.recentSignals} /></div>
+              <div><p className="text-label uppercase text-text-secondary">Leadership</p><MarkdownPreview source={notes.company.leadership} /></div>
+              <div className="col-span-2"><p className="text-label uppercase text-text-secondary">Reputation</p><MarkdownPreview source={notes.company.reputation} /></div>
             </section>
-            <section><p className="text-subheading mb-sm">Calibration</p><div className="flex gap-md"><span className="px-md py-xs rounded-full bg-accent-muted text-accent text-label">{notes.calibration.style}</span><span className="px-md py-xs rounded-full bg-accent-muted text-accent text-label">{notes.calibration.difficulty}</span><span className="px-md py-xs rounded-full bg-accent-muted text-accent text-label">{notes.calibration.tone}</span></div><p className="text-body mt-sm">{notes.calibration.justification}</p></section>
-            <section><p className="text-subheading mb-sm">Risk areas</p><p className="text-body">{notes.riskAreas}</p></section>
+            <section><p className="text-subheading mb-sm">Calibration</p><div className="flex gap-md"><span className="px-md py-xs rounded-full bg-accent-muted text-accent text-label">{notes.calibration.style}</span><span className="px-md py-xs rounded-full bg-accent-muted text-accent text-label">{notes.calibration.difficulty}</span><span className="px-md py-xs rounded-full bg-accent-muted text-accent text-label">{notes.calibration.tone}</span></div><MarkdownPreview source={notes.calibration.justification} /></section>
+            <section><p className="text-subheading mb-sm">Risk areas</p><MarkdownPreview source={notes.riskAreas} /></section>
           </>
         ) : null}
 
