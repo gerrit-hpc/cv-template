@@ -5,10 +5,12 @@ import { CURRENT_USER_ID } from "@/server/data/current-user";
 import { getChatProvider } from "@/lib/chat/providers/index";
 import { loadHistory, appendUserMessage, appendAssistantMessage } from "@/lib/chat/persistence";
 import { buildKbTools } from "@/lib/chat/tools/kb/index";
+import { getMode } from "@/lib/chat/modes";
 
 const BodySchema = z.object({
   content: z.string().min(1),
   system: z.string().optional(),
+  mode: z.string().optional(),
 });
 
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
@@ -25,7 +27,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     return NextResponse.json({ error: body.error.flatten() }, { status: 400 });
   }
 
-  const { content, system } = body.data;
+  const { content, system, mode } = body.data;
+
+  const requestedMode = mode ? getMode(mode) : null;
+  if (mode && !requestedMode) {
+    return NextResponse.json({ error: "Unknown mode" }, { status: 400 });
+  }
+
   await appendUserMessage(app.id, content);
   const history = await loadHistory(app.id);
 
@@ -36,8 +44,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
   const provider = await getChatProvider();
   // Build tools scoped to the current user. Tool payloads stream to the client
   // but are not persisted to ChatMessage in v1 (payload persistence lands with HOM-25).
-  const tools = buildKbTools(CURRENT_USER_ID); // scopeToUser: CURRENT_USER_ID
-  const events = provider.streamReply({ messages: history, system, tools, signal: abortController.signal });
+  const allTools = buildKbTools(CURRENT_USER_ID); // scopeToUser: CURRENT_USER_ID
+  const tools = requestedMode ? requestedMode.filterTools(allTools) : allTools;
+  const systemPrompt = requestedMode ? requestedMode.systemPrompt : system;
+  const events = provider.streamReply({
+    messages: history,
+    system: systemPrompt,
+    tools,
+    signal: abortController.signal,
+  });
 
   const encoder = new TextEncoder();
   let accumulated = "";
