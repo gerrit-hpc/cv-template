@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MarkdownPreview } from "@/components/sections/markdown-preview";
 import { parseSSE } from "@/lib/chat/parse-sse";
 import type { ChatStreamEvent } from "@/lib/chat/providers/types";
+import { ProposalCard, type Proposal, type ProposalStatus } from "@/components/chat/proposal-card";
+import { isWriteToolName } from "@/lib/chat/tools/writes";
 
 type MessageRole = "user" | "assistant";
 
@@ -16,7 +18,19 @@ interface Message {
   streaming?: boolean;
   stopped?: boolean;
   error?: boolean;
+  createdAt: Date;
 }
+
+interface TimelineProposal extends Proposal {
+  kind: "proposal";
+  createdAt: Date;
+}
+
+interface TimelineMessage extends Message {
+  kind: "message";
+}
+
+type TimelineEntry = TimelineMessage | TimelineProposal;
 
 export interface ChatStreamProps {
   applicationId: number;
@@ -27,12 +41,18 @@ export interface ChatStreamProps {
     content: string;
     createdAt: Date;
   }>;
+  initialProposals?: Array<{
+    id: number;
+    toolUseId: string;
+    toolName: string;
+    args: unknown;
+    status: ProposalStatus;
+    resolvedContent: unknown;
+    resolutionError: string | null;
+    createdAt: Date;
+  }>;
   // optional system prompt — wired by HOM-29 mode selector
   system?: string;
-}
-
-function assertNever(x: never): never {
-  throw new Error(`Unexpected role: ${String(x)}`);
 }
 
 function Row({ message }: { message: Message }) {
@@ -46,54 +66,66 @@ function Row({ message }: { message: Message }) {
     );
   }
 
-  if (message.role === "assistant") {
-    if (message.error) {
-      return (
-        <div className="flex justify-start w-full">
-          <div className="bg-danger-muted text-danger rounded-lg px-md py-sm w-full">
-            {message.content}
-          </div>
-        </div>
-      );
-    }
-
+  if (message.error) {
     return (
-      <div className="flex justify-start">
-        <div className="bg-surface-raised text-text rounded-lg px-md py-sm max-w-[80%]">
-          {message.streaming ? (
-            <span className="whitespace-pre-wrap">
-              {message.content}
-              <span className="animate-pulse">▍</span>
-            </span>
-          ) : (
-            <>
-              <MarkdownPreview source={message.content} />
-              {message.stopped && (
-                <span className="text-small text-text-secondary"> (stopped)</span>
-              )}
-            </>
-          )}
+      <div className="flex justify-start w-full">
+        <div className="bg-danger-muted text-danger rounded-lg px-md py-sm w-full">
+          {message.content}
         </div>
       </div>
     );
   }
 
-  return assertNever(message.role);
+  return (
+    <div className="flex justify-start">
+      <div className="bg-surface-raised text-text rounded-lg px-md py-sm max-w-[80%]">
+        {message.streaming ? (
+          <span className="whitespace-pre-wrap">
+            {message.content}
+            <span className="animate-pulse">▍</span>
+          </span>
+        ) : (
+          <>
+            <MarkdownPreview source={message.content} />
+            {message.stopped && (
+              <span className="text-small text-text-secondary"> (stopped)</span>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function ChatStream({
   applicationSlug,
   initialMessages,
+  initialProposals = [],
   system,
 }: ChatStreamProps) {
-  const [messages, setMessages] = useState<Message[]>(() =>
+  const [messages, setMessages] = useState<TimelineMessage[]>(() =>
     initialMessages
       .filter((m) => m.role === "user" || m.role === "assistant")
       .map((m) => ({
+        kind: "message" as const,
         id: String(m.id),
         role: m.role as MessageRole,
         content: m.content,
+        createdAt: new Date(m.createdAt),
       })),
+  );
+  const [proposals, setProposals] = useState<TimelineProposal[]>(() =>
+    initialProposals.map((p) => ({
+      kind: "proposal",
+      id: p.id,
+      toolUseId: p.toolUseId,
+      toolName: p.toolName,
+      args: p.args,
+      status: p.status,
+      resolvedContent: p.resolvedContent,
+      resolutionError: p.resolutionError,
+      createdAt: new Date(p.createdAt),
+    })),
   );
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -102,6 +134,14 @@ export function ChatStream({
   const abortRef = useRef<AbortController | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const timeline = useMemo<TimelineEntry[]>(
+    () =>
+      [...messages, ...proposals].sort(
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+      ),
+    [messages, proposals],
+  );
 
   const isPinnedToBottom = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -113,7 +153,6 @@ export function ChatStream({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  // Scroll to bottom on mount
   useEffect(() => {
     scrollToBottom();
   }, [scrollToBottom]);
@@ -122,15 +161,45 @@ export function ChatStream({
     if (isPinnedToBottom()) scrollToBottom();
   }, [isPinnedToBottom, scrollToBottom]);
 
+  const upsertProposalByToolUseId = useCallback(
+    (toolUseId: string, patch: Partial<TimelineProposal>) => {
+      setProposals((prev) => {
+        const idx = prev.findIndex((p) => p.toolUseId === toolUseId);
+        if (idx === -1) {
+          return [
+            ...prev,
+            {
+              kind: "proposal",
+              toolUseId,
+              toolName: patch.toolName ?? "unknown",
+              args: patch.args ?? {},
+              status: "pending",
+              createdAt: new Date(),
+              ...patch,
+            } as TimelineProposal,
+          ];
+        }
+        const next = [...prev];
+        next[idx] = { ...next[idx], ...patch } as TimelineProposal;
+        return next;
+      });
+    },
+    [],
+  );
+
   const submit = useCallback(
     async (overrideSystem?: string) => {
       const content = input.trim();
       if (!content || streaming) return;
 
-      const userMsgId = `optimistic-${Date.now()}`;
-      const assistantMsgId = `assistant-${Date.now()}`;
+      const now = new Date();
+      const userMsgId = `optimistic-${now.getTime()}`;
+      const assistantMsgId = `assistant-${now.getTime()}`;
 
-      setMessages((prev) => [...prev, { id: userMsgId, role: "user", content }]);
+      setMessages((prev) => [
+        ...prev,
+        { kind: "message", id: userMsgId, role: "user", content, createdAt: now },
+      ]);
       setInput("");
       setStreaming(true);
       setTimeout(scrollToBottom, 0);
@@ -138,9 +207,17 @@ export function ChatStream({
       const controller = new AbortController();
       abortRef.current = controller;
 
+      const assistantCreatedAt = new Date(now.getTime() + 1);
       setMessages((prev) => [
         ...prev,
-        { id: assistantMsgId, role: "assistant", content: "", streaming: true },
+        {
+          kind: "message",
+          id: assistantMsgId,
+          role: "assistant",
+          content: "",
+          streaming: true,
+          createdAt: assistantCreatedAt,
+        },
       ]);
 
       try {
@@ -191,34 +268,53 @@ export function ChatStream({
                   : m,
               ),
             );
-          } else if (e.type === "tool_call" || e.type === "tool_result") {
-            // swallowed in v1; HOM-25 renders these as confirmation cards
-            console.log("chat: tool event (v1 no-op)", e.type);
-          } else {
-            console.log("chat: unknown event type", (e as { type: string }).type);
+          } else if (e.type === "tool_call") {
+            if (isWriteToolName(e.name)) {
+              upsertProposalByToolUseId(e.id, {
+                toolName: e.name,
+                args: e.input,
+                status: "pending",
+                createdAt: new Date(),
+              });
+              scrollIfPinned();
+            }
+          } else if (e.type === "tool_result") {
+            const out = e.output as { proposalId?: number } | null;
+            if (out && typeof out === "object" && typeof out.proposalId === "number") {
+              upsertProposalByToolUseId(e.id, { id: out.proposalId });
+            }
           }
         }
       } catch (err) {
         if ((err as { name?: string }).name === "AbortError") {
-          // Partial turn kept locally with (stopped) label; no DB row (server discards on abort)
+          // Server cancels its own in-flight proposals; mirror the state locally so the UI
+          // matches what the next reload would show.
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantMsgId ? { ...m, streaming: false, stopped: true } : m,
             ),
           );
+          setProposals((prev) =>
+            prev.map((p) =>
+              p.status === "pending" && p.createdAt >= assistantCreatedAt
+                ? { ...p, status: "cancelled" }
+                : p,
+            ),
+          );
         } else {
-          // Pre-stream failure — roll back optimistic messages and show inline error
           setMessages((prev) =>
             prev.filter((m) => m.id !== userMsgId && m.id !== assistantMsgId),
           );
           setMessages((prev) => [
             ...prev,
             {
+              kind: "message",
               id: `error-${Date.now()}`,
               role: "assistant",
               content:
                 err instanceof Error ? err.message : "Failed to send message. Please try again.",
               error: true,
+              createdAt: new Date(),
             },
           ]);
         }
@@ -227,11 +323,10 @@ export function ChatStream({
         abortRef.current = null;
       }
     },
-    [input, streaming, mode, applicationSlug, system, scrollToBottom, scrollIfPinned],
+    [input, streaming, mode, applicationSlug, system, scrollToBottom, scrollIfPinned, upsertProposalByToolUseId],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Enter submits, Shift+Enter inserts newline — standard chat convention
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       void submit();
@@ -242,6 +337,24 @@ export function ChatStream({
     abortRef.current?.abort();
   };
 
+  const onResolved = useCallback(
+    (updated: Proposal) => {
+      setProposals((prev) =>
+        prev.map((p) =>
+          (updated.id !== undefined && p.id === updated.id) || p.toolUseId === updated.toolUseId
+            ? {
+                ...p,
+                status: updated.status,
+                resolvedContent: updated.resolvedContent,
+                resolutionError: updated.resolutionError,
+              }
+            : p,
+        ),
+      );
+    },
+    [],
+  );
+
   return (
     <div className="flex flex-col gap-md">
       <div
@@ -251,14 +364,25 @@ export function ChatStream({
         aria-live="polite"
         aria-label="Chat messages"
       >
-        {messages.length === 0 ? (
+        {timeline.length === 0 ? (
           <p className="text-small text-text-secondary text-center py-lg">
             {mode === "tailor"
               ? "Paste a job description to start."
               : "Start the conversation — ask Claude to tailor your CV, research a company, or anything else."}
           </p>
         ) : (
-          messages.map((m) => <Row key={m.id} message={m} />)
+          timeline.map((entry) => {
+            if (entry.kind === "message") {
+              return <Row key={`m-${entry.id}`} message={entry} />;
+            }
+            return (
+              <ProposalCard
+                key={`p-${entry.toolUseId}`}
+                proposal={entry}
+                onResolved={onResolved}
+              />
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </div>

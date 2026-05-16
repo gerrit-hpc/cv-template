@@ -5,6 +5,8 @@ import { CURRENT_USER_ID } from "@/server/data/current-user";
 import { getChatProvider } from "@/lib/chat/providers/index";
 import { loadHistory, appendUserMessage, appendAssistantMessage } from "@/lib/chat/persistence";
 import { buildKbTools } from "@/lib/chat/tools/kb/index";
+import { buildWriteTools, isWriteToolName } from "@/lib/chat/tools/writes/index";
+import { cancelStreamProposals } from "@/lib/chat/proposals";
 import { getMode } from "@/lib/chat/modes";
 
 const BodySchema = z.object({
@@ -42,9 +44,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
   req.signal.addEventListener("abort", () => abortController.abort());
 
   const provider = await getChatProvider();
-  // Build tools scoped to the current user. Tool payloads stream to the client
-  // but are not persisted to ChatMessage in v1 (payload persistence lands with HOM-25).
-  const allTools = buildKbTools(CURRENT_USER_ID); // scopeToUser: CURRENT_USER_ID
+  // KB tools provide read access to the user's profile/experience/etc. Write tools
+  // surface as approval proposals (ChatToolCall rows); each pending row is durable
+  // and the model only sees a `{ proposalId, status: "pending_approval" }` ack.
+  // Tool payloads stream to the client but are not persisted to ChatMessage in v1.
+  const allTools = [
+    ...buildKbTools(CURRENT_USER_ID), // scopeToUser: CURRENT_USER_ID
+    ...buildWriteTools(app.id, CURRENT_USER_ID), // scopeToUser: applicationId verified above + CURRENT_USER_ID
+  ];
   const tools = requestedMode ? requestedMode.filterTools(allTools) : allTools;
   const systemPrompt = requestedMode ? requestedMode.systemPrompt : system;
   const events = provider.streamReply({
@@ -56,6 +63,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
 
   const encoder = new TextEncoder();
   let accumulated = "";
+  // Track write-tool tool_use IDs (not numeric proposalIds): tool_call events fire BEFORE the
+  // tool's execute() runs, so the toolUseId is recorded even if abort lands between yield and
+  // the next loop iteration. cancelStreamProposals queries by this set against the DB.
+  const streamToolUseIds: string[] = [];
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -67,6 +78,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
           if (req.signal.aborted) break;
           send(event);
           if (event.type === "text_delta") accumulated += event.text;
+          if (event.type === "tool_call" && isWriteToolName(event.name)) {
+            streamToolUseIds.push(event.id);
+          }
         }
       } catch {
         // Swallow errors after abort; they're already emitted as error events by adapters.
@@ -74,6 +88,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
 
       if (!req.signal.aborted && accumulated) {
         await appendAssistantMessage(app.id, accumulated);
+      }
+
+      if (req.signal.aborted) {
+        // Cancel any proposals this stream created so the UI doesn't leave stale pending cards.
+        await cancelStreamProposals(app.id, streamToolUseIds);
       }
 
       controller.close();
