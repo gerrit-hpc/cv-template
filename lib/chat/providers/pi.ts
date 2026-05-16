@@ -27,10 +27,10 @@ function kbToolToPiTool(tool: KbTool): AgentTool {
     parameters: tool.parameters,
     label: tool.name,
     executionMode: "parallel",
-    execute: async (_toolCallId, args) => {
+    execute: async (toolCallId, args) => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const out = await tool.execute(args as any);
+        const out = await tool.execute(args as any, { toolCallId });
         return {
           content: [{ type: "text" as const, text: JSON.stringify(out) }],
           details: out,

@@ -143,7 +143,7 @@ export function createAnthropicProvider(apiKey: string, model?: string): ChatPro
 
           try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const output = await tool.execute(parsedInput as any);
+            const output = await tool.execute(parsedInput as any, { toolCallId: pending.id });
             toolResultContent.push({
               type: "tool_result",
               tool_use_id: pending.id,
