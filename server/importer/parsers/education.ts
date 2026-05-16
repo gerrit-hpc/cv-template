@@ -12,8 +12,6 @@ type Entry = {
 };
 
 function parseDateRange(s: string): { startDate: string | null; endDate: string | null } {
-  // Handle "YYYY-YYYY" (year range, no months) vs "YYYY-MM" (single date with month)
-  // vs "YYYY-MM-YYYY" or "YYYY - YYYY" etc.
   const yearRange = s.match(/(\d{4})\s*[-–—]\s*(\d{4})(?:-(\d{2}))?/);
   if (yearRange) {
     const startYear = yearRange[1]!;
@@ -28,7 +26,13 @@ function parseDateRange(s: string): { startDate: string | null; endDate: string 
   return { startDate: `${startYear}-${startMonth}`, endDate: null };
 }
 
-function parseBulletLine(line: string, kind: Entry["kind"], order: number): Entry | null {
+function parseDate(s: string): string | null {
+  const m = s.match(/(\d{4})(?:-(\d{2}))?/);
+  if (!m) return null;
+  return `${m[1]}-${m[2] ?? "01"}`;
+}
+
+function parseCsvBullet(line: string, kind: Entry["kind"], order: number): Entry | null {
   const cleaned = line.replace(/^\s*-\s+/, "").trim();
   if (!cleaned) return null;
   const noteMatch = cleaned.match(/^(.+?),\s*"([^"]+)"$/);
@@ -42,20 +46,73 @@ function parseBulletLine(line: string, kind: Entry["kind"], order: number): Entr
   return { kind, name, institution, field: null, startDate, endDate, notes, order };
 }
 
+function splitH3Blocks(body: string): { title: string; body: string }[] {
+  const lines = body.split("\n");
+  const blocks: { title: string; body: string }[] = [];
+  let current: { title: string; body: string } | null = null;
+  for (const line of lines) {
+    const m = line.match(/^###\s+(.+?)\s*$/);
+    if (m) {
+      if (current) blocks.push(current);
+      current = { title: m[1]!, body: "" };
+    } else if (current) {
+      current.body += line + "\n";
+    }
+  }
+  if (current) blocks.push(current);
+  return blocks;
+}
+
+function findLabeledBullet(body: string, label: string): string | null {
+  const re = new RegExp(`^\\s*-\\s+\\*\\*${label}\\*\\*\\s*:\\s*(.+?)\\s*$`, "im");
+  const m = body.match(re);
+  return m ? m[1]!.trim() : null;
+}
+
+function parseH3Block(block: { title: string; body: string }, kind: Entry["kind"], order: number): Entry {
+  const institution = findLabeledBullet(block.body, "Institution");
+  const field = findLabeledBullet(block.body, "Field");
+  const startRaw = findLabeledBullet(block.body, "Start") ?? findLabeledBullet(block.body, "Start date");
+  const endRaw = findLabeledBullet(block.body, "End") ?? findLabeledBullet(block.body, "End date");
+  const notes = findLabeledBullet(block.body, "Notes");
+  return {
+    kind,
+    name: block.title,
+    institution,
+    field,
+    startDate: startRaw ? parseDate(startRaw) : null,
+    endDate: endRaw ? parseDate(endRaw) : null,
+    notes,
+    order,
+  };
+}
+
+function detectKind(heading: string): Entry["kind"] | null {
+  const h = heading.toLowerCase();
+  if (h.includes("degree")) return "degree";
+  if (h.includes("certif")) return "certification";
+  if (h.includes("course") || h.includes("training")) return "course";
+  return null;
+}
+
 export function parseEducation(source: string): Entry[] {
   const { sections } = splitSections(source);
   const out: Entry[] = [];
   for (const [heading, body] of Object.entries(sections)) {
-    const kind: Entry["kind"] | null =
-      heading.toLowerCase().includes("degree") ? "degree" :
-      heading.toLowerCase().includes("certification") ? "certification" :
-      heading.toLowerCase().includes("course") ? "course" :
-      null;
+    const kind = detectKind(heading);
     if (!kind) continue;
+    const h3Blocks = splitH3Blocks(body);
+    if (h3Blocks.length > 0) {
+      h3Blocks.forEach((block, i) => {
+        const entry = parseH3Block(block, kind, i);
+        if (entry.name) out.push(entry);
+      });
+      continue;
+    }
     const lines = body.split("\n").filter((l) => l.trim().startsWith("-"));
     lines.forEach((line, i) => {
-      const e = parseBulletLine(line, kind, i);
-      if (e) out.push(e);
+      const e = parseCsvBullet(line, kind, i);
+      if (e && e.name) out.push(e);
     });
   }
   return out;

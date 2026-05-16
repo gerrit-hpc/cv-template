@@ -16,4 +16,37 @@ describe("parseEducation", () => {
     const course = r.find((e) => e.kind === "course");
     expect(course?.name).toContain("Designing Data-Intensive");
   });
+
+  it("parses H3-block format with labeled bullets", () => {
+    const src = `# Education
+
+## Degrees
+
+### Sample Degree Name (M.Sc. equivalent)
+
+- **Institution**: Example University
+- **Field**: Sample Field of Study
+- **Start**: 2010-09
+- **End**: 2014-06
+- **Notes**: Sample notes about the degree
+
+## Certifications
+
+None — placeholder text for empty section.
+
+## Courses & Training
+
+No formal courses — placeholder text.
+`;
+    const r = parseEducation(src);
+    expect(r.length).toBe(1);
+    const d = r[0]!;
+    expect(d.kind).toBe("degree");
+    expect(d.name).toBe("Sample Degree Name (M.Sc. equivalent)");
+    expect(d.institution).toBe("Example University");
+    expect(d.field).toBe("Sample Field of Study");
+    expect(d.startDate).toBe("2010-09");
+    expect(d.endDate).toBe("2014-06");
+    expect(d.notes).toContain("Sample notes");
+  });
 });
