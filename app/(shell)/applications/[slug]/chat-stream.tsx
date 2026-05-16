@@ -97,6 +97,7 @@ export function ChatStream({
   );
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
+  const [mode, setMode] = useState<"tailor" | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -148,7 +149,11 @@ export function ChatStream({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             content,
-            ...(overrideSystem ?? system ? { system: overrideSystem ?? system } : {}),
+            ...(mode
+              ? { mode }
+              : (overrideSystem ?? system)
+                ? { system: overrideSystem ?? system }
+                : {}),
           }),
           signal: controller.signal,
         });
@@ -222,7 +227,7 @@ export function ChatStream({
         abortRef.current = null;
       }
     },
-    [input, streaming, applicationSlug, system, scrollToBottom, scrollIfPinned],
+    [input, streaming, mode, applicationSlug, system, scrollToBottom, scrollIfPinned],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -248,13 +253,42 @@ export function ChatStream({
       >
         {messages.length === 0 ? (
           <p className="text-small text-text-secondary text-center py-lg">
-            Start the conversation — ask Claude to tailor your CV, research a company, or anything
-            else.
+            {mode === "tailor"
+              ? "Paste a job description to start."
+              : "Start the conversation — ask Claude to tailor your CV, research a company, or anything else."}
           </p>
         ) : (
           messages.map((m) => <Row key={m.id} message={m} />)
         )}
         <div ref={messagesEndRef} />
+      </div>
+
+      {/* HOM-32 interim mode toggle — replaced by HOM-29 full selector */}
+      <div className="flex flex-col gap-sm">
+        <div className="flex items-center gap-sm">
+          <Button
+            size="sm"
+            variant={mode === null ? "primary" : "ghost"}
+            onClick={() => setMode(null)}
+            type="button"
+          >
+            Free chat
+          </Button>
+          <Button
+            size="sm"
+            variant={mode === "tailor" ? "primary" : "ghost"}
+            onClick={() => setMode("tailor")}
+            type="button"
+          >
+            Tailor
+          </Button>
+        </div>
+        {mode === "tailor" && (
+          <p className="text-small text-text-secondary">
+            Tailor mode — Claude will read your KB, propose a tailoring strategy, and wait for
+            approval.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-sm">
