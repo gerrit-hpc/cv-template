@@ -11,7 +11,7 @@ export function makeListExperienceTool(userId: number): KbTool<typeof parameters
       "Returns a short index of the user's work history (one line per role: slug, company, title, dates, location, employment type). Call this first when the user asks about experience or career history; then call get_experience_detail for the specific role you need.",
     parameters,
     async execute(_args) {
-      const roles = await db.experienceRole.findMany({
+      const roles = await db.experienceRole.findMany({ // scopeToUser: userId closure
         where: { userId },
         select: {
           slug: true,

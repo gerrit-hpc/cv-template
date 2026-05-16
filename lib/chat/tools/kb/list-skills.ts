@@ -12,14 +12,14 @@ export function makeListSkillsTool(userId: number): KbTool<typeof parameters> {
     parameters,
     async execute(_args) {
       const [categories, softSkills] = await Promise.all([
-        db.skillCategory.findMany({
+        db.skillCategory.findMany({ // scopeToUser: userId closure
           where: { userId },
           orderBy: { order: "asc" },
           include: {
             skills: { orderBy: { order: "asc" } },
           },
         }),
-        db.softSkill.findMany({
+        db.softSkill.findMany({ // scopeToUser: userId closure
           where: { userId },
           orderBy: { order: "asc" },
           include: { tags: { include: { tag: true } } },

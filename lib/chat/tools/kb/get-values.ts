@@ -12,7 +12,7 @@ export function makeGetValuesTool(userId: number): KbTool<typeof parameters> {
     parameters,
     async execute(_args) {
       const [principles, narrative, opinions, themes] = await Promise.all([
-        db.valuePrinciple.findMany({
+        db.valuePrinciple.findMany({ // scopeToUser: userId closure
           where: { userId },
           orderBy: { order: "asc" },
           select: { statement: true, justification: true },
@@ -21,12 +21,12 @@ export function makeGetValuesTool(userId: number): KbTool<typeof parameters> {
           where: { userId },
           select: { text: true },
         }),
-        db.valueIndustryOpinion.findMany({
+        db.valueIndustryOpinion.findMany({ // scopeToUser: userId closure
           where: { userId },
           orderBy: { order: "asc" },
           select: { position: true, why: true, counterargument: true },
         }),
-        db.valueLinkedInTheme.findMany({
+        db.valueLinkedInTheme.findMany({ // scopeToUser: userId closure
           where: { userId },
           orderBy: { order: "asc" },
           select: { text: true },
