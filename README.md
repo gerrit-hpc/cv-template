@@ -162,6 +162,19 @@ One brief per stage, one file per stage. Run it again for each round.
 
 ---
 
+## Customising and updating
+
+- **Tweak the look** (fonts, spacing, sections): edit `.claude/skills/cv-tailor/templates/cv.typ` and `cover-letter.typ` directly, or just ask Claude conversationally — e.g. "make the header smaller", "switch to a serif font for the body".
+- **Pull template improvements** from upstream: this is a GitHub template repo, so your copy is independent once forked. To get later changes, add the source as a remote and cherry-pick:
+  ```sh
+  git remote add upstream <this-template-repo-url>
+  git fetch upstream
+  git log upstream/main --oneline   # see what's new
+  git cherry-pick <commit>          # or merge selectively
+  ```
+
+---
+
 ## Privacy
 
 This repo is intended to be **private**. The knowledge base will contain personal details (contact info, employer history, opinions). If you put it on GitHub, make sure it's a private repo — and consider a separate repo for the published artifacts you actually want to share.
