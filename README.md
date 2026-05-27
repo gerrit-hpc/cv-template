@@ -13,6 +13,7 @@ The idea: instead of editing one big CV file every time you apply somewhere, you
 3. **Build the knowledge base.** Run `/interview` and let Claude walk you through it. ~1 hour, can be split across sessions — files are saved as you go.
 4. **Tailor for a job.** Run `/tailor <jd-url-or-path>` once you have a job description. Outputs land in `applications/<company>-<role>/` as Typst sources and PDFs.
 5. **Prep for the interview.** Once invited to interview, run `/research-company <slug>` to capture company intel and calibration bands. Then run `/interview-prep <slug> <stage>` once per round (`recruiter-screen`, `hiring-manager`, `technical`, `leadership`, `final`) to generate a focused study brief.
+6. **Debrief after each round.** Run `/interview-debrief <slug> <stage>` while it's fresh. It records what happened (people, questions, signals, gut feel) and syncs the durable intel back into the company notes — so the next round's `/interview-prep` brief is sharper.
 
 ---
 
@@ -25,6 +26,7 @@ The idea: instead of editing one big CV file every time you apply somewhere, you
     tailor.md             # /tailor — generates CV + cover letter from the KB for one JD
     research-company.md   # /research-company — captures company intel + calibration
     interview-prep.md     # /interview-prep — generates per-stage prep briefs
+    interview-debrief.md  # /interview-debrief — captures a finished round, syncs intel back
   skills/
     cv-tailor/            # Skill that does the actual tailoring + Typst rendering
       SKILL.md
@@ -36,6 +38,8 @@ The idea: instead of editing one big CV file every time you apply somewhere, you
     interview-prep/       # Skill that generates per-stage interview prep briefs
       SKILL.md
       references/         # Stage playbooks, anchor-story selection, interviewer questions
+    interview-debrief/    # Skill that captures a finished round + syncs company-notes
+      SKILL.md
 experience/
   _template.md            # Shape of one experience-file entry. Don't delete.
 README.md                 # This file
@@ -64,15 +68,16 @@ applications/
     cover-letter.typ + cover-letter.pdf
 ```
 
-After running `/research-company` and `/interview-prep`:
+After running `/research-company`, `/interview-prep`, and `/interview-debrief`:
 
 ```
 applications/
   <company>-<role>/
-    company-notes.md                       # Company intel + calibration bands
+    company-notes.md                       # Company intel + calibration bands (updated by debriefs)
     interview-prep-recruiter-screen.md     # One brief per stage you've prepped for
     interview-prep-hiring-manager.md
     interview-prep-technical.md
+    interview-debrief-recruiter-screen.md  # One debrief per round you've completed
     ...
 ```
 
