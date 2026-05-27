@@ -24,6 +24,7 @@ Always read:
 
 - **KB**: `profile.md`, `values.md`, `skills.md`, `education.md`, every file in `experience/` (excluding `_template.md`).
 - **Folder**: `<app-folder>/job-description.md`, `<app-folder>/tailoring-strategy.md`, `<app-folder>/company-notes.md` (or note absence).
+- **Prior debriefs**: any `<app-folder>/interview-debrief-*.md` files (glob). These record what happened in earlier rounds. Carry their **Action items next round** and **What stumbled** sections forward into this brief — they are the highest-signal input for what to drill. (Durable intel like people, process, and calibration has already been synced into `company-notes.md`.)
 - **References**: `references/stage-playbooks.md` (always), `references/anchor-story-selection.md` (always), `references/interviewer-questions.md` (always).
 
 Parse the calibration YAML block in `company-notes.md` if present — you'll feed `style`, `difficulty`, and `tone` into question selection. If `company-notes.md` is missing, default to:
@@ -51,7 +52,9 @@ Present in chat, before writing the file:
 
 2. **Question cluster outline** — which clusters this stage's brief will include (e.g. "career narrative, motivation, comp" for recruiter-screen; "system design, code reviews, debugging stories, stack-depth" for technical), with rough question counts per cluster. Tune to the calibration bands.
 
-3. **Open choices to flag** — any cases where the JD or strategy points two ways and you need a steer (e.g. "lean into the most recent leadership role or an older big-company role for scale?", "include or skip live-coding prep section?").
+3. **Carry-over from prior rounds** — if any `interview-debrief-*.md` exists, list the action items and stumbles from earlier rounds you plan to fold into this brief (e.g. "recruiter-screen debrief flagged the comp answer was mushy — sharpen it", "they probed a stack gap harder than expected — front-load the transferable-skills line"). If none exist, omit this item.
+
+4. **Open choices to flag** — any cases where the JD or strategy points two ways and you need a steer (e.g. "lean into the most recent leadership role or an older big-company role for scale?", "include or skip live-coding prep section?").
 
 Format the proposal as a short chat message, not a file. Then say:
 
