@@ -13,3 +13,7 @@ applications/
 # Typst build artifacts (the .typ source is tracked, the PDF is generated alongside)
 # applications/ is already excluded above; this catches any stray PDFs elsewhere.
 *.pdf
+node_modules
+
+design/
+.env

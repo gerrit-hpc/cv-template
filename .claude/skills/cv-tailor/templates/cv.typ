@@ -104,6 +104,20 @@
     list(..qualifications)
   }
 
+  // Skills (placed before Experience for ATS keyword matching)
+  if skills_groups.len() > 0 {
+    _section(headings.skills)
+    for group in skills_groups {
+      block({
+        set par(leading: 0.35em)
+        text(weight: "bold", group.heading + ":")
+        h(0.3em)
+        group.items.join(", ")
+      })
+      v(0.05em)
+    }
+  }
+
   // Experience
   if experience.len() > 0 {
     _section(headings.experience)
@@ -112,7 +126,7 @@
       if role.at("location", default: "") != "" {
         dates-line = role.dates + " · " + role.location
       }
-      block(breakable: false, {
+      block(breakable: true, {
         grid(
           columns: (1fr, auto),
           column-gutter: 0.5em,
@@ -128,19 +142,6 @@
         }
       })
       v(0.4em)
-    }
-  }
-
-  // Skills
-  if skills_groups.len() > 0 {
-    _section(headings.skills)
-    for group in skills_groups {
-      block({
-        text(weight: "bold", group.heading + ":")
-        h(0.3em)
-        group.items.join(", ")
-      })
-      v(0.1em)
     }
   }
 
