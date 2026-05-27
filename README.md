@@ -12,8 +12,8 @@ The idea: instead of editing one big CV file every time you apply somewhere, you
 2. **Open it in Claude Code.** From the repo root, run `claude` (or open the folder in your IDE plugin).
 3. **Build the knowledge base.** Run `/interview` and let Claude walk you through it. ~1 hour, can be split across sessions — files are saved as you go.
 4. **Tailor for a job.** Run `/tailor <jd-url-or-path>` once you have a job description. Outputs land in `applications/<company>-<role>/` as Typst sources and PDFs.
-5. **Prep for the interview.** Once invited to interview, run `/research-company <slug>` to capture company intel and calibration bands. Then run `/interview-prep <slug> <stage>` once per round (`recruiter-screen`, `hiring-manager`, `technical`, `leadership`, `final`) to generate a focused study brief.
-6. **Debrief after each round.** Run `/interview-debrief <slug> <stage>` while it's fresh. It records what happened (people, questions, signals, gut feel) and syncs the durable intel back into the company notes — so the next round's `/interview-prep` brief is sharper.
+5. **Prep for the interview.** Once invited to interview, run `/interview:research <slug>` to capture company intel and calibration bands. Then run `/interview:prep <slug> <stage>` once per round (`recruiter-screen`, `hiring-manager`, `technical`, `leadership`, `final`) to generate a focused study brief.
+6. **Debrief after each round.** Run `/interview:debrief <slug> <stage>` while it's fresh. It records what happened (people, questions, signals, gut feel) and syncs the durable intel back into the company notes — so the next round's `/interview:prep` brief is sharper.
 
 ---
 
@@ -24,9 +24,10 @@ The idea: instead of editing one big CV file every time you apply somewhere, you
   commands/
     interview.md          # /interview — builds the knowledge base from a conversation
     tailor.md             # /tailor — generates CV + cover letter from the KB for one JD
-    research-company.md   # /research-company — captures company intel + calibration
-    interview-prep.md     # /interview-prep — generates per-stage prep briefs
-    interview-debrief.md  # /interview-debrief — captures a finished round, syncs intel back
+    interview/            # The interview: command group
+      research.md         # /interview:research — captures company intel + calibration
+      prep.md             # /interview:prep — generates per-stage prep briefs
+      debrief.md          # /interview:debrief — captures a finished round, syncs intel back
   skills/
     cv-tailor/            # Skill that does the actual tailoring + Typst rendering
       SKILL.md
@@ -68,7 +69,7 @@ applications/
     cover-letter.typ + cover-letter.pdf
 ```
 
-After running `/research-company`, `/interview-prep`, and `/interview-debrief`:
+After running `/interview:research`, `/interview:prep`, and `/interview:debrief`:
 
 ```
 applications/
@@ -143,7 +144,7 @@ Given a job description (URL, file path, or pasted text):
 
 It will never fabricate skills, dates, or achievements. If the JD asks for something your KB doesn't cover, it gets flagged with options instead of invented.
 
-## How `/research-company` works
+## How `/interview:research` works
 
 Once you've been invited to interview, this command captures everything needed to calibrate prep:
 
@@ -153,7 +154,7 @@ Once you've been invited to interview, this command captures everything needed t
 
 Writes `applications/<company>-<role>/company-notes.md`. Idempotent — you can re-run it across sessions as you learn more (e.g. after the recruiter call you know the panel; after the hiring-manager call you know the technical-round format).
 
-## How `/interview-prep` works
+## How `/interview:prep` works
 
 Given an application folder and a stage name:
 

@@ -4,9 +4,9 @@ description: "Research a target company and capture interview-process intel into
 
 # Research a Company for Interview Prep
 
-You are helping the user research a company they're interviewing with and capture process intel into `applications/<slug>/company-notes.md`. The output is read by `/interview-prep <stage>` to calibrate question style, difficulty, and tone.
+You are helping the user research a company they're interviewing with and capture process intel into `applications/<slug>/company-notes.md`. The output is read by `/interview:prep <stage>` to calibrate question style, difficulty, and tone.
 
-**Input**: the argument after `/research-company` is one of:
+**Input**: the argument after `/interview:research` is one of:
 - A slug (e.g. `acme-staff-engineer`) — resolves to `applications/<slug>/`
 - A path (e.g. `applications/acme-staff-engineer/`) — used directly
 - Empty — list the folders under `applications/` and ask the user which one

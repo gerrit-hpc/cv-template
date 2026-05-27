@@ -1,6 +1,6 @@
 ---
 name: interview-prep
-description: "Use when generating a stage-specific interview prep brief for a job the user is interviewing for. Reads the career KB, the JD, the tailoring strategy, and the company notes to produce a focused study artifact (anchor stories + likely questions + tough questions + questions to ask the interviewer). Triggered by the /interview-prep command. Writes applications/<slug>/interview-prep-<stage>.md. Never fabricates achievements or process details."
+description: "Use when generating a stage-specific interview prep brief for a job the user is interviewing for. Reads the career KB, the JD, the tailoring strategy, and the company notes to produce a focused study artifact (anchor stories + likely questions + tough questions + questions to ask the interviewer). Triggered by the /interview:prep command. Writes applications/<slug>/interview-prep-<stage>.md. Never fabricates achievements or process details."
 ---
 
 # Interview Prep

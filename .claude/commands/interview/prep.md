@@ -6,7 +6,7 @@ description: "Generate a stage-specific interview prep brief into applications/<
 
 You are helping the user prepare for one specific stage of one specific interview process. The output is `applications/<slug>/interview-prep-<stage>.md`, a markdown brief read before walking into the room.
 
-**Inputs**: arguments after `/interview-prep` are:
+**Inputs**: arguments after `/interview:prep` are:
 - `<slug-or-path>`: e.g. `acme-staff-engineer` or `applications/acme-staff-engineer/`. If omitted, list folders under `applications/` and ask.
 - `<stage>`: one of `recruiter-screen`, `hiring-manager`, `technical`, `leadership`, `final`. A custom stage name (e.g. `peer-panel`, `case-study`) is also valid — the skill picks the closest-matching playbook. If omitted, ask.
 
@@ -24,7 +24,7 @@ Resolve `$ARGUMENTS` into a folder path and a stage name.
 Check the folder contents:
 
 - `tailoring-strategy.md` — should exist; warn if missing (the brief loses access to the gaps analysis).
-- `company-notes.md` — if missing, offer to run `/research-company` first. If the user declines, proceed with a banner at the top of the generated brief warning that calibration is missing and question selection will be generic.
+- `company-notes.md` — if missing, offer to run `/interview:research` first. If the user declines, proceed with a banner at the top of the generated brief warning that calibration is missing and question selection will be generic.
 
 ## Phase 3: Hand off to the interview-prep skill
 

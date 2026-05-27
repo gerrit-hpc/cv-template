@@ -1,6 +1,6 @@
 ---
 name: research-company
-description: "Use when researching a target company to prepare for interviews. Combines a light web pass (company URL from the JD) with a conversational interview of the user about process intel and existing knowledge, then synthesises calibration bands that downstream interview-prep uses. Triggered by the /research-company command. Writes applications/<slug>/company-notes.md. Idempotent and extensible across sessions."
+description: "Use when researching a target company to prepare for interviews. Combines a light web pass (company URL from the JD) with a conversational interview of the user about process intel and existing knowledge, then synthesises calibration bands that downstream interview-prep uses. Triggered by the /interview:research command. Writes applications/<slug>/company-notes.md. Idempotent and extensible across sessions."
 ---
 
 # Research Company
@@ -172,7 +172,7 @@ Always set `last_updated` to today's date. Set `researched_at` only when writing
 
 Report the path and a 3–5 line summary of what's captured. Suggest the next step:
 
-> *"Try `/interview-prep <stage>` to generate a focused brief for the round you're about to face."*
+> *"Try `/interview:prep <stage>` to generate a focused brief for the round you're about to face."*
 
 ---
 

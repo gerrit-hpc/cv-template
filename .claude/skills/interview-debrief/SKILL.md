@@ -1,6 +1,6 @@
 ---
 name: interview-debrief
-description: "Use when capturing what happened in a finished interview round so the next round's prep is sharper. Records a raw round debrief into applications/<slug>/interview-debrief-<stage>.md, then proposes a diff back into company-notes.md (people met, process format, comp/timeline signals, calibration shifts). Triggered by the /interview-debrief command. Hybrid capture: the user dumps what they remember, you fill the gaps. Never fabricates interviewers, questions, or signals."
+description: "Use when capturing what happened in a finished interview round so the next round's prep is sharper. Records a raw round debrief into applications/<slug>/interview-debrief-<stage>.md, then proposes a diff back into company-notes.md (people met, process format, comp/timeline signals, calibration shifts). Triggered by the /interview:debrief command. Hybrid capture: the user dumps what they remember, you fill the gaps. Never fabricates interviewers, questions, or signals."
 ---
 
 # Interview Debrief
@@ -39,7 +39,7 @@ Take whatever they give you.
 
 ### Step 3: Gap follow-ups
 
-Direct chat. **Do not use the `AskUserQuestion` tool** — this is conversational, like `/research-company`. Two or three questions per turn, not ten.
+Direct chat. **Do not use the `AskUserQuestion` tool** — this is conversational, like `/interview:research`. Two or three questions per turn, not ten.
 
 Ask only for the structured categories the dump didn't already cover. The categories to ensure are filled (or explicitly marked `unknown`):
 
@@ -104,7 +104,7 @@ Set `interviewed_at` to the round date (ask if not already clear; default to the
 
 ### Step 5: Sync to company-notes (diff + approval)
 
-If `company-notes.md` is absent, skip this step and note that the durable intel isn't being propagated — suggest `/research-company` to create the file.
+If `company-notes.md` is absent, skip this step and note that the durable intel isn't being propagated — suggest `/interview:research` to create the file.
 
 Otherwise, read `company-notes.md` and propose a **diff** — never a silent overwrite. Map debrief content to these sections:
 
@@ -124,7 +124,7 @@ Present the proposed changes as a readable summary (section-by-section: what's a
 
 Report the path of the debrief file and which `company-notes.md` sections were updated, in 3–5 lines. Suggest the next step:
 
-> "Run `/interview-prep <next-stage>` when you're prepping the next round — it'll read this debrief and carry forward the action items."
+> "Run `/interview:prep <next-stage>` when you're prepping the next round — it'll read this debrief and carry forward the action items."
 
 ---
 
