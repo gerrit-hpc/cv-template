@@ -1,6 +1,6 @@
 ---
 name: cv-tailor
-description: "Use when tailoring a CV and cover letter for a specific job description. Reads the career knowledge base in this repo, proposes a tailoring strategy you approve, then generates Typst sources and PDFs into applications/<slug>/. Triggered by the /tailor command or by user requests like 'tailor my CV for this job'. Never fabricates skills or achievements."
+description: "Use when tailoring a CV and cover letter for a specific job description. Reads the career knowledge base in this repo, proposes a tailoring strategy you approve, then generates Typst sources and PDFs into applications/<slug>/. Triggered by the /cv:tailor command or by user requests like 'tailor my CV for this job'. Never fabricates skills or achievements."
 ---
 
 # CV Tailor

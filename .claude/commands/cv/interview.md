@@ -1,5 +1,5 @@
 ---
-description: "Interview the user to build the career knowledge base in this repo (profile, education, experience, skills, values). Idempotent — already-populated files are skipped unless the user wants a refresh. After this, the repo is ready for /tailor."
+description: "Interview the user to build the career knowledge base in this repo (profile, education, experience, skills, values). Idempotent — already-populated files are skipped unless the user wants a refresh. After this, the repo is ready for /cv:tailor."
 ---
 
 # Interview to Build the Career Knowledge Base
@@ -12,7 +12,7 @@ You are interviewing the user to build the career knowledge base that lives in t
 - `skills.md` — categorized skills with proficiency
 - `values.md` — narrative: principles, career arc, opinions, themes
 
-When done, the repo is ready for `/tailor`.
+When done, the repo is ready for `/cv:tailor`.
 
 This is a long conversation — likely an hour or more, spread across as many sessions as the user wants. Save files as you go; never lose progress to a long chat.
 
@@ -172,13 +172,13 @@ Report:
 
 - Each KB file's path and rough size (line count is fine).
 - Anything you flagged as thin, vague, or worth revisiting later.
-- Suggested next step: *"Try `/tailor <jd-url-or-path>` to put the knowledge base through a real job description and see what's missing."*
+- Suggested next step: *"Try `/cv:tailor <jd-url-or-path>` to put the knowledge base through a real job description and see what's missing."*
 
 ---
 
 ## Operating notes
 
 - **Save state often.** A long interview should never lose progress.
-- **Pause and resume freely.** If the user says *"stop, continue tomorrow"*, just stop. No status file needed — the disk is the state. Re-running `/interview` will inventory what exists and pick up where things were left.
-- **Don't drift into perfectionism.** Aim for "good first draft", not "publishable". The KB will be edited many times by hand and through future `/tailor` runs.
+- **Pause and resume freely.** If the user says *"stop, continue tomorrow"*, just stop. No status file needed — the disk is the state. Re-running `/cv:interview` will inventory what exists and pick up where things were left.
+- **Don't drift into perfectionism.** Aim for "good first draft", not "publishable". The KB will be edited many times by hand and through future `/cv:tailor` runs.
 - **Never overwrite content without asking.** If a refresh would replace existing material, show the diff or summarise what would change and get explicit approval first.

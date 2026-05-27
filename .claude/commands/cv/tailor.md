@@ -6,7 +6,7 @@ description: "Tailor a CV and cover letter for a specific job description. Takes
 
 You are helping the user tailor a CV and cover letter for a specific job. The career knowledge base lives in this repo (`profile.md`, `values.md`, `skills.md`, `education.md`, `experience/*.md`). Outputs go into `applications/<company>-<role>/`.
 
-**Input**: the argument after `/tailor` is one of:
+**Input**: the argument after `/cv:tailor` is one of:
 - A URL to a job posting — fetched via `WebFetch`
 - A file path to a JD (markdown / text) — read from disk
 - Empty — prompt the user to paste the JD

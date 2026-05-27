@@ -7,7 +7,7 @@ description: "Use when researching a target company to prepare for interviews. C
 
 You are gathering everything needed to calibrate interview prep for one specific role at one specific company. The output is `applications/<slug>/company-notes.md`. It is read by the `interview-prep` skill to tune question selection, difficulty, and tone.
 
-You are invoked with an absolute path to an application folder that already contains `job-description.md` (and usually `tailoring-strategy.md` and CV / cover letter artifacts from `/tailor`).
+You are invoked with an absolute path to an application folder that already contains `job-description.md` (and usually `tailoring-strategy.md` and CV / cover letter artifacts from `/cv:tailor`).
 
 The work has two pieces, in order:
 
@@ -55,7 +55,7 @@ Save these notes to draft sections in your working memory; you'll write them to 
 
 ## Phase 2: User interview pass
 
-Direct chat. **Do not use the `AskUserQuestion` tool.** This is conversational, like `/interview`.
+Direct chat. **Do not use the `AskUserQuestion` tool.** This is conversational, like `/cv:interview`.
 
 Two or three questions per turn, not ten. Save the file as soon as each section is "done enough"; the user can stop and resume any time.
 
@@ -195,7 +195,7 @@ Never overwrite existing content silently. If a refresh would replace material, 
 - Run external searches beyond WebFetch on company-owned pages (no Reddit scraping, no Glassdoor API, no levels.fyi). User-contributed reputation signals only.
 - Commit, push, or send anything. Strictly local file generation.
 - Modify `profile.md`, `experience/*.md`, the JD, or the tailoring strategy.
-- Create application folders. The folder must already exist from `/tailor`.
+- Create application folders. The folder must already exist from `/cv:tailor`.
 
 ---
 

@@ -16,7 +16,7 @@ You are helping the user capture what just happened in one specific interview ro
 
 Resolve `$ARGUMENTS` into a folder path and a stage name.
 
-- If the folder is missing: stop. Tell the user `/tailor <jd>` must run first.
+- If the folder is missing: stop. Tell the user `/cv:tailor <jd>` must run first.
 - If `applications/<slug>/job-description.md` is missing: stop with the same message.
 
 ## Phase 2: Pre-flight checks

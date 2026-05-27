@@ -10,8 +10,8 @@ The idea: instead of editing one big CV file every time you apply somewhere, you
 
 1. **Use this template / clone this repo.** On GitHub, click *Use this template*. Locally, clone or copy the contents into a fresh repo.
 2. **Open it in Claude Code.** From the repo root, run `claude` (or open the folder in your IDE plugin).
-3. **Build the knowledge base.** Run `/interview` and let Claude walk you through it. ~1 hour, can be split across sessions — files are saved as you go.
-4. **Tailor for a job.** Run `/tailor <jd-url-or-path>` once you have a job description. Outputs land in `applications/<company>-<role>/` as Typst sources and PDFs.
+3. **Build the knowledge base.** Run `/cv:interview` and let Claude walk you through it. ~1 hour, can be split across sessions — files are saved as you go.
+4. **Tailor for a job.** Run `/cv:tailor <jd-url-or-path>` once you have a job description. Outputs land in `applications/<company>-<role>/` as Typst sources and PDFs.
 5. **Prep for the interview.** Once invited to interview, run `/interview:research <slug>` to capture company intel and calibration bands. Then run `/interview:prep <slug> <stage>` once per round (`recruiter-screen`, `hiring-manager`, `technical`, `leadership`, `final`) to generate a focused study brief.
 6. **Debrief after each round.** Run `/interview:debrief <slug> <stage>` while it's fresh. It records what happened (people, questions, signals, gut feel) and syncs the durable intel back into the company notes — so the next round's `/interview:prep` brief is sharper.
 
@@ -22,8 +22,9 @@ The idea: instead of editing one big CV file every time you apply somewhere, you
 ```
 .claude/
   commands/
-    interview.md          # /interview — builds the knowledge base from a conversation
-    tailor.md             # /tailor — generates CV + cover letter from the KB for one JD
+    cv/                   # The cv: command group
+      interview.md        # /cv:interview — builds the knowledge base from a conversation
+      tailor.md           # /cv:tailor — generates CV + cover letter from the KB for one JD
     interview/            # The interview: command group
       research.md         # /interview:research — captures company intel + calibration
       prep.md             # /interview:prep — generates per-stage prep briefs
@@ -47,7 +48,7 @@ README.md                 # This file
 .gitignore
 ```
 
-After running `/interview`, the repo will also contain:
+After running `/cv:interview`, the repo will also contain:
 
 ```
 profile.md            # Name, contact, headline, summary, key qualifications, languages
@@ -55,10 +56,10 @@ education.md          # Degrees, certifications, courses
 skills.md             # Categorized skills with proficiency
 values.md             # Career values, narrative, opinions, LinkedIn themes
 experience/<...>.md   # One file per role
-jobs.md               # (Optional) raw role list, used as a worklist by /interview
+jobs.md               # (Optional) raw role list, used as a worklist by /cv:interview
 ```
 
-After running `/tailor`, you'll also get:
+After running `/cv:tailor`, you'll also get:
 
 ```
 applications/
@@ -88,14 +89,14 @@ applications/
 
 Inside `experience/`, **one markdown file per role**. Naming: `company-title.md`, lowercase, hyphenated. Example: `acme-senior-engineer.md`.
 
-- **Recent roles** (last ~5 years): Use per-achievement entries (Result / Context / Action / Tags). This lets `/tailor` pick which achievements to lead with for each JD.
+- **Recent roles** (last ~5 years): Use per-achievement entries (Result / Context / Action / Tags). This lets `/cv:tailor` pick which achievements to lead with for each JD.
 - **Older roles**: Use a short `# Highlights` bulleted list instead. Nobody reads deep history.
 
 The `_template.md` file shows both patterns.
 
 ## Tags
 
-Achievements and skills use tags so `/tailor` can filter by what matches a JD:
+Achievements and skills use tags so `/cv:tailor` can filter by what matches a JD:
 
 | Tag | Use for |
 |-----|---------|
@@ -111,16 +112,16 @@ Achievements and skills use tags so `/tailor` can filter by what matches a JD:
 
 ## Requirements
 
-- **[Claude Code](https://claude.ai/code)** — the CLI / IDE integration. The `/interview` and `/tailor` commands are auto-discovered from `.claude/commands/` when you open this repo.
-- **[Typst](https://typst.app)** (only for compiling PDFs at the end of `/tailor`):
+- **[Claude Code](https://claude.ai/code)** — the CLI / IDE integration. The `/cv:interview` and `/cv:tailor` commands are auto-discovered from `.claude/commands/` when you open this repo.
+- **[Typst](https://typst.app)** (only for compiling PDFs at the end of `/cv:tailor`):
   - macOS: `brew install typst`
   - Linux: package or binary from <https://github.com/typst/typst/releases>
   - Windows: `winget install --id Typst.Typst`
-  - The skill was developed against Typst 0.14. If `typst` isn't installed, `/tailor` still produces the `.typ` source files — you can compile later.
+  - The skill was developed against Typst 0.14. If `typst` isn't installed, `/cv:tailor` still produces the `.typ` source files — you can compile later.
 
 ---
 
-## How `/interview` works
+## How `/cv:interview` works
 
 It reads what already exists, then walks five phases (skipping any whose file is already populated):
 
@@ -130,9 +131,9 @@ It reads what already exists, then walks five phases (skipping any whose file is
 4. **Skills** — synthesized from your experience files; you confirm proficiency levels and trim.
 5. **Values** — narrative file with core principles, career arc, industry opinions, and LinkedIn themes. (This is the one most people skip and then regret when writing cover letters.)
 
-You can pause and resume any time — the disk is the state. Re-running `/interview` picks up where you left off.
+You can pause and resume any time — the disk is the state. Re-running `/cv:interview` picks up where you left off.
 
-## How `/tailor` works
+## How `/cv:tailor` works
 
 Given a job description (URL, file path, or pasted text):
 
@@ -160,7 +161,7 @@ Given an application folder and a stage name:
 
 1. **Reads everything** — KB, JD, tailoring strategy, company notes.
 2. **Proposes a prep plan** — anchor stories (3–5 from your KB, picked to cover the JD's must-haves) and question clusters tuned to the stage and calibration.
-3. **Waits for your approval** (same gate model as `/tailor`).
+3. **Waits for your approval** (same gate model as `/cv:tailor`).
 4. **Generates** `applications/<company>-<role>/interview-prep-<stage>.md` — a focused markdown brief with: stage context, anchor stories in STAR form, likely questions with how-to-answer guidance, tough questions / gaps from the tailoring strategy, questions to ask the interviewer, and stage-specific logistics.
 5. **Iterates in chat** — swap stories, deepen sections, regenerate.
 
